@@ -1,1 +1,32 @@
-const r=require('express').Router(),sb=require('../lib/supabase'),{auth}=require('../middleware/auth');r.get('/',auth(),async(q,s)=>{const x=sb();if(!x)return s.json([]);const z=await x.from('assistants').select('*').eq('user_id',q.user.id);s.json(z.data||[])});r.post('/',auth(),async(q,s)=>{const x=sb();if(!x)return s.status(503).json({error:'Supabase is not configured'});const z=await x.from('assistants').insert({user_id:q.user.id,name:q.body.name,description:q.body.description||'',instructions:q.body.instructions||'',model:q.body.model||null,tools:q.body.tools||[]}).select().single();if(z.error)return s.status(400).json({error:z.error.message});s.json(z.data)});module.exports=r;
+const r = require('express').Router();
+const db = require('../lib/local-db');
+const { auth } = require('../middleware/auth');
+
+r.get('/', auth(), (q, s) => {
+  const items = db.read('assistants')
+    .filter(x => x.user_id === q.user.id);
+
+  s.json(items);
+});
+
+r.post('/', auth(), (q, s) => {
+  const items = db.read('assistants');
+
+  const item = {
+    id: db.id('assistant'),
+    user_id: q.user.id,
+    name: q.body.name,
+    description: q.body.description || '',
+    instructions: q.body.instructions || '',
+    model: q.body.model || null,
+    tools: q.body.tools || [],
+    created_at: new Date().toISOString()
+  };
+
+  items.push(item);
+  db.write('assistants', items);
+
+  s.json(item);
+});
+
+module.exports = r;

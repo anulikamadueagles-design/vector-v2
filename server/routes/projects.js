@@ -1,1 +1,47 @@
-const r=require('express').Router(),sb=require('../lib/supabase'),{auth}=require('../middleware/auth');r.get('/',auth(),async(q,s)=>{const x=sb();if(!x)return s.json([]);const z=await x.from('projects').select('*').eq('user_id',q.user.id).order('updated_at',{ascending:false});s.json(z.data||[])});r.post('/',auth(),async(q,s)=>{const x=sb();if(!x)return s.status(503).json({error:'Supabase is not configured'});const z=await x.from('projects').insert({user_id:q.user.id,name:q.body.name,description:q.body.description||'',instructions:q.body.instructions||''}).select().single();if(z.error)return s.status(400).json({error:z.error.message});s.json(z.data)});r.delete('/:id',auth(),async(q,s)=>{const x=sb();if(!x)return s.status(503).json({error:'Supabase is not configured'});await x.from('projects').delete().eq('id',q.params.id).eq('user_id',q.user.id);s.json({ok:true})});module.exports=r;
+const r = require('express').Router();
+const db = require('../lib/local-db');
+const { auth } = require('../middleware/auth');
+
+r.get('/', auth(), (q, s) => {
+  const items = db.read('projects')
+    .filter(x => x.user_id === q.user.id)
+    .sort((a, b) =>
+      String(b.updated_at).localeCompare(String(a.updated_at))
+    );
+
+  s.json(items);
+});
+
+r.post('/', auth(), (q, s) => {
+  const items = db.read('projects');
+  const now = new Date().toISOString();
+
+  const item = {
+    id: db.id('project'),
+    user_id: q.user.id,
+    name: q.body.name,
+    description: q.body.description || '',
+    instructions: q.body.instructions || '',
+    created_at: now,
+    updated_at: now
+  };
+
+  items.push(item);
+  db.write('projects', items);
+
+  s.json(item);
+});
+
+r.delete('/:id', auth(), (q, s) => {
+  let items = db.read('projects');
+
+  items = items.filter(
+    x => !(x.id === q.params.id && x.user_id === q.user.id)
+  );
+
+  db.write('projects', items);
+
+  s.json({ ok: true });
+});
+
+module.exports = r;

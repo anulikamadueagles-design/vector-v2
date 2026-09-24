@@ -385,8 +385,151 @@ button{border:0;cursor:pointer}
 
 .messages{
  max-width:850px;
- margin:auto
+ width:100%;
+ margin:auto;
+ box-sizing:border-box
 }
+
+.message{
+ display:flex;
+ gap:12px;
+ margin:20px 0;
+ width:100%;
+ box-sizing:border-box
+}
+
+.message.user{
+ justify-content:flex-end
+}
+
+.message.ai{
+ justify-content:flex-start
+}
+
+.ai-content{
+ max-width:80%;
+ min-width:0
+}
+
+.message-actions{
+ display:flex;
+ flex-wrap:wrap;
+ align-items:center;
+ gap:6px;
+ margin-top:7px;
+ padding-left:2px
+}
+
+.message-action{
+ appearance:none;
+ border:1px solid var(--line);
+ background:rgba(10,17,31,.72);
+ color:#8291a8;
+ border-radius:8px;
+ min-height:32px;
+ padding:6px 10px;
+ font:inherit;
+ font-size:11px;
+ line-height:1;
+ cursor:pointer;
+ transition:
+   background .18s ease,
+   border-color .18s ease,
+   color .18s ease,
+   transform .12s ease
+}
+
+.message-action:hover{
+ color:#dce5f4;
+ border-color:#52647d;
+ background:rgba(20,31,52,.95)
+}
+
+.message-action:active{
+ transform:scale(.97)
+}
+
+.message-action.active{
+ color:#58d8ff;
+ border-color:#58d8ff;
+ background:rgba(88,216,255,.08)
+}
+
+.message-action:focus-visible{
+ outline:2px solid #58d8ff;
+ outline-offset:2px
+}
+
+.ai .bubble{
+ max-width:100%;
+ box-sizing:border-box
+}
+
+@media (max-width:900px){
+ .messages{
+  max-width:none;
+  padding:0 14px
+ }
+
+ .ai-content{
+  max-width:88%
+ }
+
+ .bubble{
+  max-width:88%
+ }
+}
+
+@media (max-width:600px){
+ .messages{
+  padding:0 9px
+ }
+
+ .message{
+  gap:8px;
+  margin:15px 0
+ }
+
+ .ai-content{
+  max-width:94%
+ }
+
+ .bubble{
+  max-width:94%;
+  padding:11px 13px;
+  font-size:14px;
+  line-height:1.6
+ }
+
+ .message-actions{
+  gap:5px;
+  margin-top:6px
+ }
+
+ .message-action{
+  min-height:34px;
+  padding:7px 9px;
+  font-size:10px;
+  border-radius:7px
+ }
+}
+
+@media (max-width:380px){
+ .messages{
+  padding:0 6px
+ }
+
+ .ai-content,
+ .bubble{
+  max-width:97%
+ }
+
+ .message-action{
+  padding:7px 8px;
+  font-size:9px
+ }
+}
+
 
 .message{
  display:flex;
@@ -1512,11 +1655,187 @@ function addMessage(role,text){
  const row=document.createElement('div');
  row.className='message '+role;
 
+ const content=document.createElement('div');
+
+ if(role==='ai'){
+  content.className='ai-content';
+ }else{
+  content.className='user-content';
+ }
+
  const bubble=document.createElement('div');
  bubble.className='bubble';
  bubble.textContent=text;
 
- row.appendChild(bubble);
+ content.appendChild(bubble);
+
+ if(role==='ai'){
+  const actions=document.createElement('div');
+  actions.className='message-actions';
+
+  const like=document.createElement('button');
+  like.type='button';
+  like.className='message-action';
+  like.textContent='Like';
+  like.title='Like this response';
+
+  const dislike=document.createElement('button');
+  dislike.type='button';
+  dislike.className='message-action';
+  dislike.textContent='Dislike';
+  dislike.title='Dislike this response';
+
+  const share=document.createElement('button');
+  share.type='button';
+  share.className='message-action';
+  share.textContent='Share';
+  share.title='Share this response';
+
+  const copy=document.createElement('button');
+  copy.type='button';
+  copy.className='message-action';
+  copy.textContent='Copy';
+  copy.title='Copy this response';
+
+  const listen=document.createElement('button');
+  listen.type='button';
+  listen.className='message-action';
+  listen.textContent='Listen';
+  listen.title='Read this response aloud';
+
+  const feedbackKey=()=>{
+   const conversation=conversationId||'new';
+   return 'vector_feedback_'+conversation+'_'+encodeURIComponent(
+    bubble.textContent.slice(0,120)
+   );
+  };
+
+  like.onclick=()=>{
+   const key=feedbackKey();
+   const state=localStorage.getItem(key);
+
+   if(state==='like'){
+    localStorage.removeItem(key);
+    like.classList.remove('active');
+   }else{
+    localStorage.setItem(key,'like');
+    like.classList.add('active');
+    dislike.classList.remove('active');
+   }
+  };
+
+  dislike.onclick=()=>{
+   const key=feedbackKey();
+   const state=localStorage.getItem(key);
+
+   if(state==='dislike'){
+    localStorage.removeItem(key);
+    dislike.classList.remove('active');
+   }else{
+    localStorage.setItem(key,'dislike');
+    dislike.classList.add('active');
+    like.classList.remove('active');
+   }
+  };
+
+  share.onclick=async()=>{
+   const text=bubble.textContent.trim();
+
+   try{
+    if(navigator.share){
+     await navigator.share({
+      title:'VECTOR',
+      text:text
+     });
+    }else if(navigator.clipboard){
+     await navigator.clipboard.writeText(text);
+     share.textContent='Copied';
+     setTimeout(()=>share.textContent='Share',1200);
+    }else{
+     const area=document.createElement('textarea');
+     area.value=text;
+     document.body.appendChild(area);
+     area.select();
+     document.execCommand('copy');
+     area.remove();
+     share.textContent='Copied';
+     setTimeout(()=>share.textContent='Share',1200);
+    }
+   }catch(e){}
+  };
+
+  copy.onclick=async()=>{
+   const text=bubble.textContent.trim();
+
+   try{
+    if(navigator.clipboard){
+     await navigator.clipboard.writeText(text);
+    }else{
+     const area=document.createElement('textarea');
+     area.value=text;
+     document.body.appendChild(area);
+     area.select();
+     document.execCommand('copy');
+     area.remove();
+    }
+
+    copy.textContent='Copied';
+    setTimeout(()=>copy.textContent='Copy',1200);
+   }catch(e){}
+  };
+
+  listen.onclick=()=>{
+   const text=bubble.textContent.trim();
+
+   if(!text)return;
+
+   if(window.speechSynthesis){
+    if(
+     window.speechSynthesis.speaking &&
+     listen.dataset.speaking==='true'
+    ){
+     window.speechSynthesis.cancel();
+     listen.dataset.speaking='false';
+     listen.textContent='Listen';
+     return;
+    }
+
+    window.speechSynthesis.cancel();
+
+    const utterance=new SpeechSynthesisUtterance(text);
+
+    utterance.onstart=()=>{
+     listen.dataset.speaking='true';
+     listen.textContent='Stop';
+    };
+
+    utterance.onend=()=>{
+     listen.dataset.speaking='false';
+     listen.textContent='Listen';
+    };
+
+    utterance.onerror=()=>{
+     listen.dataset.speaking='false';
+     listen.textContent='Listen';
+    };
+
+    window.speechSynthesis.speak(utterance);
+   }else{
+    listen.textContent='Unavailable';
+    setTimeout(()=>listen.textContent='Listen',1200);
+   }
+  };
+
+  actions.appendChild(like);
+  actions.appendChild(dislike);
+  actions.appendChild(share);
+  actions.appendChild(copy);
+  actions.appendChild(listen);
+
+  content.appendChild(actions);
+ }
+
+ row.appendChild(content);
  $('messages').appendChild(row);
 
  $('chat').scrollTop=$('chat').scrollHeight;

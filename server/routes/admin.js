@@ -1,1 +1,29 @@
-const r=require('express').Router(),{auth}=require('../middleware/auth'),sb=require('../lib/supabase');r.get('/overview',auth(),async(q,s)=>{if(process.env.ADMIN_EMAIL&&q.user.email!==process.env.ADMIN_EMAIL)return s.status(403).json({error:'Admin access required'});const x=sb();if(!x)return s.json({configured:false});const [u,c,p,e]=await Promise.all([x.auth.admin.listUsers({page:1,perPage:1}),x.from('conversations').select('*',{count:'exact',head:true}),x.from('projects').select('*',{count:'exact',head:true}),x.from('usage_events').select('*',{count:'exact',head:true})]);s.json({configured:true,users:u.data?.total||0,conversations:c.count||0,projects:p.count||0,usageEvents:e.count||0})});module.exports=r;
+const r = require('express').Router();
+const { auth } = require('../middleware/auth');
+const db = require('../lib/local-db');
+
+r.get('/overview', auth(), (q, s) => {
+  if (
+    process.env.ADMIN_EMAIL &&
+    q.user.email !== process.env.ADMIN_EMAIL
+  ) {
+    return s.status(403).json({
+      error: 'Admin access required'
+    });
+  }
+
+  const users = db.read('users');
+  const conversations = db.read('conversations');
+  const projects = db.read('projects');
+  const usageEvents = db.read('usage_events');
+
+  s.json({
+    configured: true,
+    users: users.length,
+    conversations: conversations.length,
+    projects: projects.length,
+    usageEvents: usageEvents.length
+  });
+});
+
+module.exports = r;

@@ -19,3 +19,14 @@ npm-debug.log*
 *.backup
 *.backup-*
 *-backup-*
+
+# Local application database
+data/users.json
+data/api_keys.json
+data/assistants.json
+data/memories.json
+data/conversations.json
+data/messages.json
+data/projects.json
+data/usage_events.json
+data/*.backup*
