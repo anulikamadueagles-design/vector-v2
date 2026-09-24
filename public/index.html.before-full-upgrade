@@ -1,0 +1,2499 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#050914">
+<title>VECTOR — AI Assistant</title>
+
+<style>
+*{
+  box-sizing:border-box;
+  margin:0;
+  padding:0;
+}
+
+:root{
+  --bg:#050914;
+  --panel:#080d19;
+  --panel2:#0b1220;
+  --line:rgba(100,150,220,.15);
+  --text:#f4f7ff;
+  --muted:#8290aa;
+  --cyan:#36d9ff;
+  --blue:#477cff;
+  --purple:#7167ff;
+  --danger:#ff5577;
+}
+
+html,body{
+  width:100%;
+  height:100%;
+  overflow:hidden;
+  background:var(--bg);
+  color:var(--text);
+  font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+}
+
+button,input,textarea{
+  font:inherit;
+}
+
+button{
+  border:0;
+  cursor:pointer;
+}
+
+.app{
+  width:100%;
+  height:100dvh;
+  display:flex;
+  position:relative;
+  overflow:hidden;
+  background:
+    radial-gradient(circle at 50% 35%,rgba(49,108,255,.08),transparent 32%),
+    radial-gradient(circle at 80% 90%,rgba(0,220,255,.05),transparent 30%),
+    #050914;
+}
+
+/* GRID */
+
+.grid{
+  position:absolute;
+  inset:0;
+  pointer-events:none;
+  opacity:.42;
+  background-image:
+    linear-gradient(rgba(75,120,190,.13) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(75,120,190,.13) 1px,transparent 1px);
+  background-size:72px 72px;
+  mask-image:linear-gradient(to bottom,black 0%,black 65%,transparent 100%);
+}
+
+/* SIDEBAR */
+
+.sidebar{
+  width:285px;
+  height:100%;
+  background:rgba(6,11,22,.94);
+  border-right:1px solid var(--line);
+  display:flex;
+  flex-direction:column;
+  position:relative;
+  z-index:20;
+  transition:.25s ease;
+}
+
+.brand{
+  height:72px;
+  display:flex;
+  align-items:center;
+  gap:12px;
+  padding:0 20px;
+  border-bottom:1px solid var(--line);
+}
+
+.logo{
+  width:39px;
+  height:39px;
+  border-radius:12px;
+  display:grid;
+  place-items:center;
+  font-size:21px;
+  font-weight:900;
+  color:white;
+  background:linear-gradient(135deg,var(--cyan),var(--blue),var(--purple));
+  box-shadow:0 0 25px rgba(54,217,255,.2);
+}
+
+.brand-name{
+  font-weight:800;
+  letter-spacing:3px;
+  font-size:17px;
+}
+
+.brand-sub{
+  font-size:9px;
+  color:var(--muted);
+  letter-spacing:1.5px;
+  margin-top:2px;
+}
+
+.new-chat{
+  margin:18px 14px 10px;
+  padding:13px 15px;
+  border:1px solid rgba(54,217,255,.2);
+  background:linear-gradient(135deg,rgba(54,217,255,.12),rgba(71,124,255,.08));
+  color:white;
+  border-radius:13px;
+  display:flex;
+  align-items:center;
+  gap:10px;
+  font-weight:650;
+}
+
+.new-chat:hover{
+  border-color:rgba(54,217,255,.5);
+}
+
+.nav{
+  padding:8px 12px;
+}
+
+.nav button{
+  width:100%;
+  display:flex;
+  align-items:center;
+  gap:12px;
+  padding:11px 12px;
+  border-radius:10px;
+  color:#9ca9bf;
+  background:transparent;
+  text-align:left;
+  margin-bottom:3px;
+}
+
+.nav button:hover,
+.nav button.active{
+  color:white;
+  background:rgba(255,255,255,.055);
+}
+
+.nav-icon{
+  width:22px;
+  text-align:center;
+  font-size:17px;
+}
+
+.history{
+  flex:1;
+  overflow:auto;
+  padding:12px 14px;
+}
+
+.history-title{
+  color:#5e6b82;
+  font-size:10px;
+  text-transform:uppercase;
+  letter-spacing:1.5px;
+  padding:8px;
+}
+
+.history-item{
+  padding:10px;
+  border-radius:9px;
+  color:#8491a8;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  font-size:13px;
+  cursor:pointer;
+}
+
+.history-item:hover{
+  background:rgba(255,255,255,.04);
+  color:white;
+}
+
+.sidebar-footer{
+  border-top:1px solid var(--line);
+  padding:14px;
+}
+
+.profile{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  padding:9px;
+  border-radius:10px;
+}
+
+.avatar{
+  width:34px;
+  height:34px;
+  border-radius:50%;
+  display:grid;
+  place-items:center;
+  background:linear-gradient(135deg,#173b72,#146a8d);
+  font-size:13px;
+  font-weight:800;
+}
+
+.profile-name{
+  font-size:12px;
+  font-weight:650;
+}
+
+.profile-type{
+  color:#66758d;
+  font-size:10px;
+  margin-top:2px;
+}
+
+/* MAIN */
+
+.main{
+  min-width:0;
+  flex:1;
+  height:100%;
+  position:relative;
+  display:flex;
+  flex-direction:column;
+}
+
+.topbar{
+  height:72px;
+  border-bottom:1px solid var(--line);
+  background:rgba(5,9,20,.72);
+  backdrop-filter:blur(18px);
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding:0 20px;
+  position:relative;
+  z-index:10;
+}
+
+.top-left{
+  display:flex;
+  align-items:center;
+  gap:12px;
+}
+
+.mobile-menu{
+  display:none;
+  width:40px;
+  height:40px;
+  border-radius:10px;
+  background:#0c1424;
+  color:white;
+}
+
+.session-title{
+  font-size:14px;
+  font-weight:700;
+}
+
+.session-status{
+  font-size:10px;
+  color:#68778f;
+  margin-top:3px;
+}
+
+.model{
+  height:38px;
+  border:1px solid var(--line);
+  background:#0a1120;
+  color:#b9c8df;
+  border-radius:11px;
+  padding:0 12px;
+  outline:none;
+  max-width:210px;
+}
+
+/* CHAT */
+
+.chat{
+  flex:1;
+  overflow-y:auto;
+  position:relative;
+  z-index:2;
+  padding:35px 24px 170px;
+}
+
+.empty{
+  max-width:850px;
+  margin:8vh auto 0;
+  text-align:center;
+}
+
+.vector-symbol{
+  width:78px;
+  height:78px;
+  margin:0 auto 24px;
+  position:relative;
+  display:grid;
+  place-items:center;
+}
+
+.vector-symbol:before{
+  content:"";
+  position:absolute;
+  width:54px;
+  height:54px;
+  border-left:4px solid var(--cyan);
+  border-top:4px solid var(--cyan);
+  transform:rotate(45deg);
+  filter:drop-shadow(0 0 10px rgba(54,217,255,.55));
+}
+
+.vector-symbol:after{
+  content:"";
+  position:absolute;
+  width:8px;
+  height:8px;
+  border-radius:50%;
+  background:var(--cyan);
+  right:2px;
+  top:6px;
+  box-shadow:0 0 20px var(--cyan);
+}
+
+.empty h1{
+  font-size:clamp(32px,5vw,57px);
+  line-height:1.06;
+  letter-spacing:-2px;
+  margin-bottom:16px;
+}
+
+.gradient{
+  background:linear-gradient(90deg,var(--cyan),#4e96ff,var(--purple));
+  -webkit-background-clip:text;
+  background-clip:text;
+  color:transparent;
+}
+
+.empty p{
+  max-width:650px;
+  margin:auto;
+  color:#7e8ca5;
+  font-size:15px;
+  line-height:1.7;
+}
+
+.quick-actions{
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:10px;
+  max-width:760px;
+  margin:34px auto 0;
+}
+
+.quick{
+  border:1px solid var(--line);
+  background:rgba(8,14,27,.76);
+  border-radius:14px;
+  padding:15px 12px;
+  color:#a8b4c9;
+  text-align:left;
+  transition:.2s;
+}
+
+.quick:hover{
+  border-color:rgba(54,217,255,.35);
+  transform:translateY(-2px);
+}
+
+.quick strong{
+  display:block;
+  color:#e8effb;
+  font-size:12px;
+  margin-bottom:5px;
+}
+
+.quick span{
+  font-size:10px;
+  color:#64738b;
+}
+
+/* MESSAGES */
+
+.messages{
+  max-width:850px;
+  margin:auto;
+}
+
+.message{
+  display:flex;
+  gap:12px;
+  margin:20px 0;
+}
+
+.message.user{
+  justify-content:flex-end;
+}
+
+.bubble{
+  max-width:78%;
+  padding:13px 16px;
+  border-radius:17px;
+  line-height:1.65;
+  font-size:14px;
+  white-space:pre-wrap;
+}
+
+.user .bubble{
+  background:linear-gradient(135deg,#166dca,#4569ed);
+  color:white;
+  border-bottom-right-radius:5px;
+}
+
+.ai .bubble{
+  background:rgba(10,17,31,.9);
+  border:1px solid var(--line);
+  color:#dce5f4;
+  border-bottom-left-radius:5px;
+}
+
+.generated-image{
+  max-width:100%;
+  border-radius:14px;
+  margin-top:8px;
+  display:block;
+}
+
+/* COMPOSER */
+
+.composer-wrap{
+  position:absolute;
+  z-index:15;
+  left:0;
+  right:0;
+  bottom:0;
+  padding:18px 24px calc(18px + env(safe-area-inset-bottom));
+  background:linear-gradient(transparent,rgba(5,9,20,.94) 30%);
+}
+
+.composer{
+  max-width:850px;
+  margin:auto;
+  border:1px solid rgba(103,150,220,.22);
+  background:rgba(8,14,27,.94);
+  box-shadow:0 15px 50px rgba(0,0,0,.4),0 0 35px rgba(50,110,255,.05);
+  border-radius:20px;
+  padding:10px;
+  backdrop-filter:blur(20px);
+}
+
+.tools{
+  display:flex;
+  align-items:center;
+  gap:5px;
+  padding:2px 4px 7px;
+}
+
+.tool{
+  width:34px;
+  height:32px;
+  border-radius:9px;
+  color:#8090aa;
+  background:transparent;
+  font-size:15px;
+}
+
+.tool:hover,
+.tool.active{
+  background:#111d31;
+  color:var(--cyan);
+}
+
+.prompt-row{
+  display:flex;
+  align-items:flex-end;
+  gap:8px;
+}
+
+textarea{
+  min-width:0;
+  flex:1;
+  resize:none;
+  border:0;
+  outline:none;
+  background:transparent;
+  color:white;
+  padding:9px 8px;
+  max-height:130px;
+  font-size:14px;
+  line-height:1.5;
+}
+
+textarea::placeholder{
+  color:#56647a;
+}
+
+.send{
+  width:43px;
+  height:43px;
+  border-radius:14px;
+  color:white;
+  background:linear-gradient(135deg,var(--cyan),var(--blue));
+  font-size:19px;
+  box-shadow:0 0 20px rgba(54,217,255,.16);
+}
+
+.send.stop{
+  background:linear-gradient(135deg,#ff5577,#8f4cff);
+}
+
+.composer-hint{
+  text-align:center;
+  color:#4e5b70;
+  font-size:9px;
+  margin-top:8px;
+}
+
+/* IMAGE MODAL */
+
+.modal{
+  position:fixed;
+  inset:0;
+  z-index:100;
+  background:rgba(0,0,0,.72);
+  backdrop-filter:blur(12px);
+  display:none;
+  align-items:center;
+  justify-content:center;
+  padding:20px;
+}
+
+.modal.open{
+  display:flex;
+}
+
+.modal-card{
+  width:min(600px,100%);
+  background:#09101d;
+  border:1px solid var(--line);
+  border-radius:20px;
+  padding:20px;
+  box-shadow:0 25px 80px rgba(0,0,0,.55);
+}
+
+.modal-head{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  margin-bottom:18px;
+}
+
+.modal-head h2{
+  font-size:18px;
+}
+
+.close{
+  background:#111b2d;
+  color:#8d9bb0;
+  width:34px;
+  height:34px;
+  border-radius:9px;
+}
+
+.image-prompt{
+  width:100%;
+  min-height:100px;
+  background:#050b16;
+  color:white;
+  border:1px solid var(--line);
+  border-radius:13px;
+  padding:13px;
+  resize:vertical;
+  outline:none;
+}
+
+.generate{
+  margin-top:12px;
+  width:100%;
+  height:45px;
+  border-radius:12px;
+  color:white;
+  font-weight:700;
+  background:linear-gradient(135deg,var(--cyan),var(--blue));
+}
+
+.image-result{
+  margin-top:18px;
+}
+
+.image-result img{
+  width:
+  width:100%;
+  max-height:520px;
+  object-fit:contain;
+  border-radius:14px;
+  display:block;
+  border:1px solid var(--line);
+}
+
+.image-actions{
+  display:flex;
+  gap:8px;
+  margin-top:10px;
+}
+
+.image-actions button{
+  flex:1;
+  height:40px;
+  border-radius:10px;
+  background:#111b2d;
+  color:#b8c6db;
+}
+
+.image-actions button:hover{
+  background:#17243a;
+  color:white;
+}
+
+/* FILE PREVIEW */
+
+.file-preview{
+  display:none;
+  align-items:center;
+  gap:9px;
+  padding:8px 10px;
+  margin-bottom:7px;
+  border:1px solid var(--line);
+  background:#0b1424;
+  border-radius:10px;
+  color:#9daec7;
+  font-size:11px;
+}
+
+.file-preview.show{
+  display:flex;
+}
+
+.file-name{
+  flex:1;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+
+.file-remove{
+  background:transparent;
+  color:#718098;
+  font-size:15px;
+}
+
+/* SEARCH RESULTS */
+
+.search-results{
+  margin-top:10px;
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+
+.search-result{
+  display:block;
+  text-decoration:none;
+  padding:11px;
+  border:1px solid var(--line);
+  background:#0a1322;
+  border-radius:11px;
+  color:#b9c8dc;
+}
+
+.search-result:hover{
+  border-color:rgba(54,217,255,.35);
+}
+
+.search-result strong{
+  display:block;
+  color:#eef5ff;
+  font-size:12px;
+  margin-bottom:4px;
+}
+
+.search-result span{
+  color:#718098;
+  font-size:10px;
+  line-height:1.5;
+}
+
+/* LOADING */
+
+.typing{
+  display:flex;
+  align-items:center;
+  gap:4px;
+  padding:4px 0;
+}
+
+.typing span{
+  width:6px;
+  height:6px;
+  border-radius:50%;
+  background:var(--cyan);
+  animation:typing 1s infinite;
+}
+
+.typing span:nth-child(2){
+  animation-delay:.15s;
+}
+
+.typing span:nth-child(3){
+  animation-delay:.3s;
+}
+
+@keyframes typing{
+  0%,60%,100%{
+    opacity:.25;
+    transform:translateY(0);
+  }
+  30%{
+    opacity:1;
+    transform:translateY(-3px);
+  }
+}
+
+/* MOBILE */
+
+@media(max-width:900px){
+
+  .sidebar{
+    position:fixed;
+    left:0;
+    top:0;
+    bottom:0;
+    z-index:80;
+    transform:translateX(-100%);
+    box-shadow:20px 0 60px rgba(0,0,0,.5);
+  }
+
+  .sidebar.open{
+    transform:translateX(0);
+  }
+
+  .mobile-menu{
+    display:block;
+  }
+
+  .topbar{
+    height:64px;
+    padding:0 12px;
+  }
+
+  .model{
+    max-width:145px;
+    font-size:11px;
+  }
+
+  .chat{
+    padding:25px 13px 170px;
+  }
+
+  .empty{
+    margin-top:7vh;
+  }
+
+  .empty h1{
+    font-size:36px;
+    letter-spacing:-1.5px;
+  }
+
+  .empty p{
+    font-size:13px;
+    padding:0 14px;
+  }
+
+  .quick-actions{
+    grid-template-columns:repeat(2,1fr);
+    margin:25px 8px 0;
+  }
+
+  .quick{
+    padding:13px 10px;
+  }
+
+  .composer-wrap{
+    padding:12px 10px calc(10px + env(safe-area-inset-bottom));
+  }
+
+  .composer{
+    border-radius:17px;
+  }
+
+  .composer-hint{
+    display:none;
+  }
+
+  .bubble{
+    max-width:90%;
+    font-size:13px;
+  }
+
+  .top-left{
+    min-width:0;
+  }
+
+  .session-title{
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    max-width:130px;
+  }
+
+  .session-status{
+    display:none;
+  }
+}
+
+@media(max-width:480px){
+
+  .model{
+    max-width:125px;
+  }
+
+  .empty{
+    margin-top:5vh;
+  }
+
+  .vector-symbol{
+    transform:scale(.82);
+    margin-bottom:12px;
+  }
+
+  .empty h1{
+    font-size:31px;
+  }
+
+  .quick-actions{
+    gap:7px;
+  }
+
+  .quick strong{
+    font-size:11px;
+  }
+
+  .quick span{
+    font-size:9px;
+  }
+
+  .tool{
+    width:32px;
+  }
+
+  textarea{
+    font-size:13px;
+  }
+
+  .send{
+    width:40px;
+    height:40px;
+  }
+}
+</style>
+</head>
+
+<body>
+
+<div class="app">
+
+  <div class="grid"></div>
+
+  <!-- SIDEBAR -->
+
+  <aside class="sidebar" id="sidebar">
+
+    <div class="brand">
+      <div class="logo">V</div>
+
+      <div>
+        <div class="brand-name">VECTOR</div>
+        <div class="brand-sub">AI INTELLIGENCE PLATFORM</div>
+      </div>
+    </div>
+
+    <button class="new-chat" onclick="newChat()">
+      <span>＋</span>
+      <span>New conversation</span>
+    </button>
+
+    <nav class="nav">
+
+      <button class="active" onclick="showHome()">
+        <span class="nav-icon">⌂</span>
+        <span>Chat</span>
+      </button>
+
+      <button onclick="openImageModal()">
+        <span class="nav-icon">✦</span>
+        <span>Image generation</span>
+      </button>
+
+      <button onclick="focusSearch()">
+        <span class="nav-icon">⌕</span>
+        <span>Web search</span>
+      </button>
+
+      <button onclick="document.getElementById('file-input').click()">
+        <span class="nav-icon">▣</span>
+        <span>Files</span>
+      </button>
+
+    </nav>
+
+    <div class="history">
+
+      <div class="history-title">
+        Recent conversations
+      </div>
+
+      <div id="history-list"></div>
+
+    </div>
+
+    <div class="sidebar-footer">
+
+      <div class="profile">
+
+        <div class="avatar">D</div>
+
+        <div>
+          <div class="profile-name">
+            David Kamsi Elvis
+          </div>
+
+          <div class="profile-type">
+            VECTOR'S ELEMENT TECH
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+
+  </aside>
+
+  <!-- MAIN -->
+
+  <main class="main">
+
+    <header class="topbar">
+
+      <div class="top-left">
+
+        <button
+          class="mobile-menu"
+          onclick="toggleSidebar()">
+          ☰
+        </button>
+
+        <div>
+
+          <div class="session-title">
+            New conversation
+          </div>
+
+          <div class="session-status">
+            VECTOR AI • Online
+          </div>
+
+        </div>
+
+      </div>
+
+      <select id="model" class="model">
+
+        <option value="llama-3.3-70b-versatile">
+          Llama 3.3 70B
+        </option>
+
+        <option value="llama-3.1-8b-instant">
+          Llama 3.1 8B
+        </option>
+
+        <option value="mixtral-8x7b-32768">
+          Mixtral
+        </option>
+
+        <option value="gemma2-9b-it">
+          Gemma 2
+        </option>
+
+      </select>
+
+    </header>
+
+    <!-- CHAT -->
+
+    <section class="chat" id="chat">
+
+      <div class="empty" id="empty">
+
+        <div class="vector-symbol"></div>
+
+        <h1>
+          What can I help you
+          <span class="gradient">build?</span>
+        </h1>
+
+        <p>
+          Ask anything, paste code, attach a file or image,
+          search the web, generate images, or talk to VECTOR.
+        </p>
+
+        <div class="quick-actions">
+
+          <button
+            class="quick"
+            onclick="quickPrompt('Explain this idea and help me turn it into a real project.')">
+
+            <strong>✦ Build something</strong>
+            <span>Turn an idea into a project</span>
+
+          </button>
+
+          <button
+            class="quick"
+            onclick="openImageModal()">
+
+            <strong>◈ Create an image</strong>
+            <span>Generate an image with AI</span>
+
+          </button>
+
+          <button
+            class="quick"
+            onclick="quickPrompt('/search latest technology news')">
+
+            <strong>⌕ Search the web</strong>
+            <span>Find current information</span>
+
+          </button>
+
+          <button
+            class="quick"
+            onclick="quickPrompt('Help me write professional code for my project.')">
+
+            <strong>⌘ Write code</strong>
+            <span>Build and debug software</span>
+
+          </button>
+
+        </div>
+
+      </div>
+
+      <div class="messages" id="messages"></div>
+
+    </section>
+
+    <!-- COMPOSER -->
+
+    <div class="composer-wrap">
+
+      <div class="composer">
+
+        <div
+          class="file-preview"
+          id="file-preview">
+
+          <span>📎</span>
+
+          <span
+            class="file-name"
+            id="file-name">
+          </span>
+
+          <button
+            class="file-remove"
+            onclick="removeFile()">
+            ×
+          </button>
+
+        </div>
+
+        <div class="tools">
+
+          <button
+            class="tool"
+            title="Attach file"
+            onclick="document.getElementById('file-input').click()">
+            ＋
+          </button>
+
+          <button
+            class="tool"
+            title="Web search"
+            id="search-tool"
+            onclick="toggleSearch()">
+            ◎
+          </button>
+
+          <button
+            class="tool"
+            title="Voice input"
+            onclick="startVoice()">
+            🎙
+          </button>
+
+          <button
+            class="tool"
+            title="Generate image"
+            onclick="openImageModal()">
+            ✦
+          </button>
+
+          <button
+            class="tool"
+            title="Speak last response"
+            onclick="speakLastResponse()">
+            🔊
+          </button>
+
+          <input
+            type="file"
+            id="file-input"
+            hidden
+            accept=".txt,.md,.json,.csv,.html,.css,.js,.ts,.jsx,.tsx,.py,.java,.php,.sql,.xml,.yaml,.yml,.pdf,image/*"
+            onchange="handleFile(event)">
+
+        </div>
+
+        <div class="prompt-row">
+
+          <textarea
+            id="prompt"
+            rows="1"
+            placeholder="Message VECTOR..."
+            autocomplete="off"></textarea>
+
+          <button
+            class="send"
+            id="send"
+            onclick="sendMessage()">
+            ➤
+          </button>
+
+        </div>
+
+        <div class="composer-hint">
+          VECTOR can make mistakes. Check important information.
+        </div>
+
+      </div>
+
+    </div>
+
+  </main>
+
+</div>
+
+
+<!-- IMAGE MODAL -->
+
+<div
+  class="modal"
+  id="image-modal"
+  onclick="closeImageOutside(event)">
+
+  <div class="modal-card">
+
+    <div class="modal-head">
+
+      <h2>Generate an image</h2>
+
+      <button
+        class="close"
+        onclick="closeImageModal()">
+        ×
+      </button>
+
+    </div>
+
+    <textarea
+      id="image-prompt"
+      class="image-prompt"
+      placeholder="Describe the image you want VECTOR to create..."></textarea>
+
+    <button
+      class="generate"
+      id="generate-btn"
+      onclick="generateImage()">
+      Generate image
+    </button>
+
+    <div
+      class="image-result"
+      id="image-result"></div>
+
+  </div>
+
+</div>
+
+
+<script>
+
+/* =========================================================
+   VECTOR CORE
+========================================================= */
+
+const state = {
+
+  messages: [],
+
+  file: null,
+
+  fileText: "",
+
+  searching: false,
+
+  lastResponse: "",
+
+  abortController: null
+
+};
+
+
+/* =========================================================
+   ELEMENTS
+========================================================= */
+
+const promptInput =
+  document.getElementById("prompt");
+
+const messagesEl =
+  document.getElementById("messages");
+
+const emptyEl =
+  document.getElementById("empty");
+
+const sidebar =
+  document.getElementById("sidebar");
+
+const historyList =
+  document.getElementById("history-list");
+
+
+/* =========================================================
+   LOCAL STORAGE
+========================================================= */
+
+function saveConversation(){
+
+  try{
+
+    localStorage.setItem(
+      "vector_messages",
+      JSON.stringify(state.messages)
+    );
+
+  }catch(e){}
+
+}
+
+
+function loadConversation(){
+
+  try{
+
+    const saved =
+      localStorage.getItem("vector_messages");
+
+    if(!saved) return;
+
+    state.messages =
+      JSON.parse(saved);
+
+    renderMessages();
+
+  }catch(e){
+
+    state.messages = [];
+
+  }
+
+}
+
+
+function saveHistoryTitle(text){
+
+  try{
+
+    let history =
+      JSON.parse(
+        localStorage.getItem("vector_history") || "[]"
+      );
+
+    const title =
+      text.length > 48
+        ? text.substring(0,48) + "..."
+        : text;
+
+    history.unshift({
+      title,
+      time: Date.now()
+    });
+
+    history =
+      history.slice(0,20);
+
+    localStorage.setItem(
+      "vector_history",
+      JSON.stringify(history)
+    );
+
+    renderHistory();
+
+  }catch(e){}
+
+}
+
+
+function renderHistory(){
+
+  historyList.innerHTML = "";
+
+  try{
+
+    const history =
+      JSON.parse(
+        localStorage.getItem("vector_history") || "[]"
+      );
+
+    history.forEach(item => {
+
+      const div =
+        document.createElement("div");
+
+      div.className =
+        "history-item";
+
+      div.textContent =
+        item.title;
+
+      historyList.appendChild(div);
+
+    });
+
+  }catch(e){}
+
+}
+
+
+/* =========================================================
+   SIDEBAR
+========================================================= */
+
+function toggleSidebar(){
+
+  sidebar.classList.toggle("open");
+
+}
+
+
+function closeSidebar(){
+
+  sidebar.classList.remove("open");
+
+}
+
+
+/* =========================================================
+   NEW CHAT
+========================================================= */
+
+function newChat(){
+
+  state.messages = [];
+
+  state.file = null;
+
+  state.fileText = "";
+
+  messagesEl.innerHTML = "";
+
+  emptyEl.style.display = "";
+
+  removeFile();
+
+  saveConversation();
+
+  document.querySelector(".session-title")
+    .textContent = "New conversation";
+
+  closeSidebar();
+
+}
+
+
+/* =========================================================
+   HOME
+========================================================= */
+
+function showHome(){
+
+  closeSidebar();
+
+  promptInput.focus();
+
+}
+
+
+/* =========================================================
+   QUICK PROMPT
+========================================================= */
+
+function quickPrompt(text){
+
+  promptInput.value = text;
+
+  autoResize();
+
+  promptInput.focus();
+
+}
+
+
+/* =========================================================
+   TEXTAREA
+========================================================= */
+
+promptInput.addEventListener(
+  "input",
+  autoResize
+);
+
+
+function autoResize(){
+
+  promptInput.style.height = "auto";
+
+  promptInput.style.height =
+    Math.min(
+      promptInput.scrollHeight,
+      130
+    ) + "px";
+
+}
+
+
+promptInput.addEventListener(
+  "keydown",
+  e => {
+
+    if(
+      e.key === "Enter" &&
+      !e.shiftKey
+    ){
+
+      e.preventDefault();
+
+      sendMessage();
+
+    }
+
+  }
+);
+
+
+/* =========================================================
+   FILES
+========================================================= */
+
+function handleFile(event){
+
+  const file =
+    event.target.files[0];
+
+  if(!file) return;
+
+  state.file = file;
+
+  document.getElementById("file-name")
+    .textContent = file.name;
+
+  document.getElementById("file-preview")
+    .classList.add("show");
+
+  if(
+    file.type.startsWith("text/") ||
+    /\.(txt|md|json|csv|js|ts|jsx|tsx|py|java|php|sql|html|css|xml|yaml|yml)$/i.test(file.name)
+  ){
+
+    const reader =
+      new FileReader();
+
+    reader.onload = e => {
+
+      state.fileText =
+        e.target.result
+          .substring(0,120000);
+
+    };
+
+    reader.readAsText(file);
+
+  }else{
+
+    state.fileText =
+      `[Attached file: ${file.name}]`;
+
+  }
+
+}
+
+
+function removeFile(){
+
+  state.file = null;
+
+  state.fileText = "";
+
+  const input =
+    document.getElementById("file-input");
+
+  if(input) input.value = "";
+
+  document.getElementById("file-preview")
+    .classList.remove("show");
+
+}
+
+
+/* =========================================================
+   RENDER MESSAGES
+========================================================= */
+
+function renderMessages(){
+
+  messagesEl.innerHTML = "";
+
+  if(state.messages.length){
+
+    emptyEl.style.display = "none";
+
+  }else{
+
+    emptyEl.style.display = "";
+
+  }
+
+  state.messages.forEach(message => {
+
+    addMessageToDOM(
+      message.role,
+      message.content,
+      false
+    );
+
+  });
+
+}
+
+
+function escapeHTML(text){
+
+  return String(text)
+    .replace(/&/g,"&amp;")
+    .replace(/</g,"&lt;")
+    .replace(/>/g,"&gt;")
+    .replace(/"/g,"&quot;")
+    .replace(/'/g,"&#039;");
+
+}
+
+
+function addMessageToDOM(
+  role,
+  content,
+  scroll=true
+){
+
+  const row =
+    document.createElement("div");
+
+  row.className =
+    "message " +
+    (role === "user" ? "user" : "ai");
+
+  const bubble =
+    document.createElement("div");
+
+  bubble.className =
+    "bubble";
+
+  bubble.textContent =
+    content;
+
+  row.appendChild(bubble);
+
+  messagesEl.appendChild(row);
+
+  if(scroll){
+
+    document.getElementById("chat")
+      .scrollTop =
+      document.getElementById("chat")
+        .scrollHeight;
+
+  }
+
+  return bubble;
+
+}
+
+
+/* =========================================================
+   TYPING
+========================================================= */
+
+function addTyping(){
+
+  const row =
+    document.createElement("div");
+
+  row.className =
+    "message ai";
+
+  row.id =
+    "typing-message";
+
+  row.innerHTML = `
+    <div class="bubble">
+      <div class="typing">
+        <span></span>
+        <span></span>
+        <span></span>
+      </div>
+    </div>
+  `;
+
+  messagesEl.appendChild(row);
+
+  document.getElementById("chat")
+    .scrollTop =
+    document.getElementById("chat")
+      .scrollHeight;
+
+}
+
+
+function removeTyping(){
+
+  const el =
+    document.getElementById(
+      "typing-message"
+    );
+
+  if(el) el.remove();
+
+}
+
+
+/* =========================================================
+   CHAT API
+========================================================= */
+
+async function sendMessage(){
+
+  const text =
+    promptInput.value.trim();
+
+  if(!text) return;
+
+  emptyEl.style.display = "none";
+
+  promptInput.value = "";
+
+  autoResize();
+
+  closeSidebar();
+
+  addMessageToDOM(
+    "user",
+    text
+  );
+
+  state.messages.push({
+    role:"user",
+    content:text
+  });
+
+  saveConversation();
+
+  if(state.messages.length === 1){
+
+    document.querySelector(
+      ".session-title"
+    ).textContent =
+      text.length > 32
+        ? text.substring(0,32) + "..."
+        : text;
+
+    saveHistoryTitle(text);
+
+  }
+
+
+  /* SEARCH COMMAND */
+
+  if(
+    text.toLowerCase().startsWith("/search ")
+  ){
+
+    const query =
+      text.substring(8).trim();
+
+    await performSearch(query);
+
+    return;
+
+  }
+
+
+  addTyping();
+
+  const sendButton =
+    document.getElementById("send");
+
+  sendButton.classList.add("stop");
+
+  sendButton.textContent = "■";
+
+
+  try{
+
+    state.abortController =
+      new AbortController();
+
+    const payload = {
+
+      message:text,
+
+      prompt:text,
+
+      model:
+        document.getElementById("model").value,
+
+      history:
+        state.messages.slice(-20),
+
+      file:
+        state.fileText || null
+
+    };
+
+
+    const response =
+      await fetch(
+        "/api/chat",
+        {
+          method:"POST",
+          headers:{
+            "Content-Type":
+              "application/json"
+          },
+          body:
+            JSON.stringify(payload),
+          signal:
+            state.abortController.signal
+        }
+      );
+
+
+    const raw =
+      await response.text();
+
+    let data = null;
+
+    try{
+
+      data =
+        JSON.parse(raw);
+
+    }catch(e){}
+
+
+    removeTyping();
+
+
+    if(!response.ok){
+
+      throw new Error(
+        data?.error ||
+        data?.message ||
+        raw ||
+        "VECTOR request failed"
+      );
+
+    }
+
+
+    const answer =
+      extractAIResponse(data,raw);
+
+
+    state.lastResponse =
+      answer;
+
+
+    addMessageToDOM(
+      "assistant",
+      answer
+    );
+
+
+    state.messages.push({
+
+      role:"assistant",
+
+      content:answer
+
+    });
+
+
+    saveConversation();
+
+    speak(answer);
+
+
+  }catch(error){
+
+    removeTyping();
+
+    if(error.name === "AbortError"){
+
+      addMessageToDOM(
+        "assistant",
+        "Generation stopped."
+      );
+
+    }else{
+
+      addMessageToDOM(
+        "assistant",
+        "I couldn't connect to the VECTOR AI service right now. Please check the server and try again.\n\n" +
+        error.message
+      );
+
+    }
+
+  }finally{
+
+    state.abortController = null;
+
+    sendButton.classList.remove("stop");
+
+    sendButton.textContent = "➤";
+
+    removeFile();
+
+  }
+
+}
+
+
+/* =========================================================
+   RESPONSE FORMAT COMPATIBILITY
+========================================================= */
+
+function extractAIResponse(data, raw){
+
+  if(typeof data === "string")
+    return data;
+
+  if(!data)
+    return raw || "No response received.";
+
+  return (
+    data.reply ||
+    data.response ||
+    data.message ||
+    data.content ||
+    data.text ||
+    data.answer ||
+    data.result ||
+    data.output ||
+    data?.choices?.[0]?.message?.content ||
+    data?.choices?.[0]?.text ||
+    "VECTOR returned an empty response."
+  );
+
+}
+
+
+/* =========================================================
+   STOP GENERATION
+========================================================= */
+
+document.getElementById("send")
+  .addEventListener("click", function(){
+
+    if(state.abortController){
+
+      state.abortController.abort();
+
+    }
+
+  });
+
+
+/* =========================================================
+   WEB SEARCH
+========================================================= */
+
+function toggleSearch(){
+
+  state.searching =
+    !state.searching;
+
+  const button =
+    document.getElementById(
+      "search-tool"
+    );
+
+  button.classList.toggle(
+    "active",
+    state.searching
+  );
+
+  if(state.searching){
+
+    promptInput.placeholder =
+      "Search the web...";
+
+  }else{
+
+    promptInput.placeholder =
+      "Message VECTOR...";
+
+  }
+
+}
+
+
+function focusSearch(){
+
+  state.searching = true;
+
+  document.getElementById(
+    "search-tool"
+  ).classList.add("active");
+
+  promptInput.placeholder =
+    "Search the web...";
+
+  promptInput.focus();
+
+  closeSidebar();
+
+}
+
+
+async function performSearch(query){
+
+  if(!query){
+
+    addMessageToDOM(
+      "assistant",
+      "Please enter something to search for."
+    );
+
+    return;
+
+  }
+
+  addTyping();
+
+  try{
+
+    const response =
+      await fetch(
+        "/api/search?q=" +
+        encodeURIComponent(query)
+      );
+
+    const raw =
+      await response.text();
+
+    let data;
+
+    try{
+
+      data = JSON.parse(raw);
+
+    }catch(e){
+
+      data = {
+        abstract:raw
+      };
+
+    }
+
+    removeTyping();
+
+    let answer =
+      data.abstract ||
+      data.answer ||
+      data.result ||
+      data.text ||
+      "No search result was returned.";
+
+    if(
+      data.source ||
+      data.url
+    ){
+
+      answer +=
+        "\n\nSource: " +
+        (data.source || data.url);
+
+    }
+
+    addMessageToDOM(
+      "assistant",
+      answer
+    );
+
+    state.messages.push({
+
+      role:"assistant",
+
+      content:answer
+
+    });
+
+    saveConversation();
+
+  }catch(error){
+
+    removeTyping();
+
+    addMessageToDOM(
+      "assistant",
+      "Web search failed. Please try again."
+    );
+
+  }
+
+}
+
+
+/* =========================================================
+   IMAGE GENERATION
+   POLLINATIONS AI
+========================================================= */
+
+function openImageModal(){
+
+  document
+    .getElementById("image-modal")
+    .classList.add("open");
+
+  setTimeout(
+    () =>
+      document
+        .getElementById("image-prompt")
+        .focus(),
+    100
+  );
+
+}
+
+
+function closeImageModal(){
+
+  document
+    .getElementById("image-modal")
+    .classList.remove("open");
+
+}
+
+
+function closeImageOutside(event){
+
+  if(
+    event.target.id ===
+    "image-modal"
+  ){
+
+    closeImageModal();
+
+  }
+
+}
+
+
+async function generateImage(){
+
+  const prompt =
+    document
+      .getElementById("image-prompt")
+      .value.trim();
+
+  if(!prompt){
+
+    alert(
+      "Describe the image you want VECTOR to create."
+    );
+
+    return;
+
+  }
+
+
+  const result =
+    document.getElementById(
+      "image-result"
+    );
+
+  const button =
+    document.getElementById(
+      "generate-btn"
+    );
+
+
+  button.disabled = true;
+
+  button.textContent =
+    "Creating image...";
+
+
+  result.innerHTML = `
+    <div style="
+      text-align:center;
+      color:#718098;
+      padding:20px;
+      font-size:12px;
+    ">
+      VECTOR is creating your image...
+    </div>
+  `;
+
+
+  try{
+
+    /*
+      Pollinations AI image endpoint.
+
+      A unique seed prevents browser caching
+      from returning an old image.
+    */
+
+    const seed =
+      Math.floor(
+        Math.random() * 999999999
+      );
+
+    const imageURL =
+      "https://image.pollinations.ai/prompt/" +
+      encodeURIComponent(prompt) +
+      "?width=1024&height=1024&nologo=true&seed=" +
+      seed;
+
+
+    const img =
+      new Image();
+
+    img.onload = () => {
+
+      result.innerHTML = "";
+
+      result.appendChild(img);
+
+      img.className =
+        "generated-image";
+
+      const actions =
+        document.createElement("div");
+
+      actions.className =
+        "image-actions";
+
+      actions.innerHTML = `
+        <button onclick="downloadGeneratedImage('${imageURL}')">
+          Download
+        </button>
+
+        <button onclick="useGeneratedImage('${imageURL}')">
+          Add to chat
+        </button>
+      `;
+
+      result.appendChild(actions);
+
+      button.disabled = false;
+
+      button.textContent =
+        "Generate image";
+
+    };
+
+
+    img.onerror = () => {
+
+      result.innerHTML = `
+        <div style="
+          color:#ff718b;
+          padding:15px;
+          font-size:12px;
+          text-align:center;
+        ">
+          Image generation failed. Please try again.
+        </div>
+      `;
+
+      button.disabled = false;
+
+      button.textContent =
+        "Generate image";
+
+    };
+
+
+    img.src = imageURL;
+
+
+  }catch(error){
+
+    result.innerHTML =
+      "Image generation failed.";
+
+    button.disabled = false;
+
+    button.textContent =
+      "Generate image";
+
+  }
+
+}
+
+
+function downloadGeneratedImage(url){
+
+  const link =
+    document.createElement("a");
+
+  link.href = url;
+
+  link.target = "_blank";
+
+  link.download =
+    "VECTOR-generated-image.png";
+
+  document.body.appendChild(link);
+
+  link.click();
+
+  link.remove();
+
+}
+
+
+function useGeneratedImage(url){
+
+  closeImageModal();
+
+  emptyEl.style.display = "none";
+
+  const row =
+    document.createElement("div");
+
+  row.className =
+    "message ai";
+
+  const bubble =
+    document.createElement("div");
+
+  bubble.className =
+    "bubble";
+
+  bubble.innerHTML = `
+    <div style="
+      color:#91a2bb;
+      font-size:11px;
+      margin-bottom:8px;
+    ">
+      Generated by VECTOR
+    </div>
+
+    <img
+      src="${url}"
+      class="generated-image"
+      alt="VECTOR generated image"
+    />
+  `;
+
+  row.appendChild(bubble);
+
+  messagesEl.appendChild(row);
+
+  document.getElementById("chat")
+    .scrollTop =
+    document.getElementById("chat")
+      .scrollHeight;
+
+}
+
+
+/* =========================================================
+   VOICE INPUT
+========================================================= */
+
+function startVoice(){
+
+  const Recognition =
+    window.SpeechRecognition ||
+    window.webkitSpeechRecognition;
+
+  if(!Recognition){
+
+    alert(
+      "Voice recognition is not supported by this browser."
+    );
+
+    return;
+
+  }
+
+
+  const recognition =
+    new Recognition();
+
+  recognition.lang =
+    navigator.language || "en-US";
+
+  recognition.interimResults =
+    false;
+
+  recognition.continuous =
+    false;
+
+
+  recognition.onstart = () => {
+
+    promptInput.placeholder =
+      "Listening...";
+
+  };
+
+
+  recognition.onresult = event => {
+
+    promptInput.value =
+      event.results[0][0].transcript;
+
+    autoResize();
+
+  };
+
+
+  recognition.onerror = () => {
+
+    promptInput.placeholder =
+      "Message VECTOR...";
+
+  };
+
+
+  recognition.onend = () => {
+
+    promptInput.placeholder =
+      "Message VECTOR...";
+
+    promptInput.focus();
+
+  };
+
+
+  recognition.start();
+
+}
+
+
+/* =========================================================
+   TEXT TO SPEECH
+========================================================= */
+
+function speak(text){
+
+  if(
+    !("speechSynthesis" in window) ||
+    !text
+  ){
+
+    return;
+
+  }
+
+  try{
+
+    window.speechSynthesis.cancel();
+
+    const utterance =
+      new SpeechSynthesisUtterance(
+        text
+      );
+
+    utterance.rate = .96;
+
+    utterance.pitch = 1;
+
+    window.speechSynthesis.speak(
+      utterance
+    );
+
+  }catch(e){}
+
+}
+
+
+function speakLastResponse(){
+
+  if(state.lastResponse){
+
+    speak(
+      state.lastResponse
+    );
+
+  }else{
+
+    const last =
+      [...state.messages]
+        .reverse()
+        .find(
+          x => x.role === "assistant"
+        );
+
+    if(last){
+
+      speak(last.content);
+
+    }
+
+  }
+
+}
+
+
+/* =========================================================
+   INITIALISE
+========================================================= */
+
+loadConversation();
+
+renderHistory();
+
+autoResize();
+
+promptInput.focus();
+
+
+/* =========================================================
+   PWA / KEYBOARD HELP
+========================================================= */
+
+document.addEventListener(
+  "keydown",
+  event => {
+
+    if(
+      event.key === "Escape"
+    ){
+
+      closeImageModal();
+
+      closeSidebar();
+
+    }
+
+  }
+);
+
+</script>
+
+</body>
+</html>

@@ -1,0 +1,704 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport"
+      content="width=device-width,initial-scale=1">
+
+<title>VECTOR Education Studio</title>
+
+<style>
+*{
+  box-sizing:border-box;
+}
+
+body{
+  margin:0;
+  background:#050914;
+  color:#eef5ff;
+  font-family:Inter,system-ui,sans-serif;
+}
+
+header{
+  padding:24px;
+  border-bottom:1px solid rgba(100,150,220,.15);
+  background:#080d19;
+}
+
+.logo{
+  color:#36d9ff;
+  font-size:22px;
+  font-weight:900;
+  letter-spacing:3px;
+}
+
+.sub{
+  color:#718099;
+  margin-top:6px;
+  font-size:12px;
+}
+
+main{
+  max-width:1200px;
+  margin:auto;
+  padding:24px;
+}
+
+.grid{
+  display:grid;
+  grid-template-columns:
+    repeat(auto-fit,minmax(220px,1fr));
+  gap:14px;
+}
+
+.card{
+  background:#09101d;
+  border:1px solid rgba(100,150,220,.15);
+  border-radius:16px;
+  padding:18px;
+}
+
+.card h3{
+  margin:0 0 8px;
+}
+
+.card p{
+  color:#7f8ca4;
+  font-size:13px;
+  line-height:1.6;
+}
+
+button{
+  border:0;
+  background:linear-gradient(
+    135deg,
+    #36d9ff,
+    #477cff
+  );
+  color:white;
+  border-radius:10px;
+  padding:10px 14px;
+  font-weight:700;
+}
+
+textarea,
+input,
+select{
+  width:100%;
+  margin-top:8px;
+  background:#050b16;
+  border:1px solid rgba(100,150,220,.2);
+  color:white;
+  border-radius:10px;
+  padding:11px;
+  outline:none;
+}
+
+textarea{
+  min-height:180px;
+  resize:vertical;
+}
+
+#output{
+  margin-top:20px;
+  background:#050b16;
+  border:1px solid rgba(100,150,220,.15);
+  border-radius:16px;
+  padding:20px;
+  white-space:pre-wrap;
+  line-height:1.7;
+  color:#dce7f8;
+}
+
+.tools{
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+  margin-top:15px;
+}
+</style>
+</head>
+
+<body>
+
+<header>
+  <div class="logo">VECTOR</div>
+  <div class="sub">
+    EDUCATION STUDIO · TEACH · CREATE · MANAGE · EXPORT
+  </div>
+</header>
+
+<main>
+
+<section class="card">
+
+<h2>Teacher & Lecturer Workspace</h2>
+
+<p>
+Create lesson materials, manage classes, track students,
+generate assessments and export teaching materials.
+</p>
+
+<label>Subject</label>
+<input id="subject"
+       placeholder="e.g. Economics">
+
+<label>Topic</label>
+<input id="topic"
+       placeholder="e.g. Demand and Supply">
+
+<label>Level</label>
+<select id="level">
+  <option>Primary</option>
+  <option>Secondary</option>
+  <option selected>University</option>
+  <option>Postgraduate</option>
+  <option>Professional</option>
+</select>
+
+</section>
+
+<br>
+
+<section class="grid">
+
+<div class="card">
+<h3>Lesson Notes</h3>
+<p>Generate complete copy-ready teaching notes.</p>
+<button onclick="generate('/api/education/lesson-notes')">
+Create Notes
+</button>
+</div>
+
+<div class="card">
+<h3>Explain Topic</h3>
+<p>Break difficult academic topics into simple explanations.</p>
+<button onclick="generate('/api/education/explain')">
+Explain
+</button>
+</div>
+
+<div class="card">
+<h3>Lesson Plan</h3>
+<p>Create structured teacher and lecturer lesson plans.</p>
+<button onclick="generate('/api/education/lesson-plan')">
+Create Plan
+</button>
+</div>
+
+<div class="card">
+<h3>Question Paper</h3>
+<p>Generate examination papers.</p>
+<button onclick="generate('/api/education/question-paper')">
+Generate
+</button>
+</div>
+
+<div class="card">
+<h3>Quiz</h3>
+<p>Create quizzes and answer keys.</p>
+<button onclick="generate('/api/education/quiz')">
+Create Quiz
+</button>
+</div>
+
+<div class="card">
+<h3>Assignment</h3>
+<p>Create student assignments.</p>
+<button onclick="generate('/api/education/assignment')">
+Create
+</button>
+</div>
+
+<div class="card">
+<h3>Marking Scheme</h3>
+<p>Create structured marking guides.</p>
+<button onclick="generate('/api/education/marking-scheme')">
+Create
+</button>
+</div>
+
+<div class="card">
+<h3>Grading Rubric</h3>
+<p>Create measurable grading criteria.</p>
+<button onclick="generate('/api/education/grading-rubric')">
+Create
+</button>
+</div>
+
+<div class="card">
+<h3>Study Guide</h3>
+<p>Build revision material for students.</p>
+<button onclick="generate('/api/education/study-guide')">
+Create
+</button>
+</div>
+
+<div class="card">
+<h3>Flashcards</h3>
+<p>Create compact revision cards.</p>
+<button onclick="generate('/api/education/flashcards')">
+Create
+</button>
+</div>
+
+<div class="card">
+<h3>Curriculum</h3>
+<p>Plan a complete course.</p>
+<button onclick="generate('/api/education/curriculum')">
+Create
+</button>
+</div>
+
+<div class="card">
+<h3>Case Study</h3>
+<p>Create realistic classroom case studies.</p>
+<button onclick="generate('/api/education/case-study')">
+Create
+</button>
+</div>
+
+</section>
+
+<br>
+
+<section class="card">
+
+<h2>Class Management</h2>
+
+<input id="className"
+       placeholder="Class name">
+
+<input id="teacher"
+       placeholder="Teacher / Lecturer">
+
+<button onclick="createClass()">
+Create Class
+</button>
+
+<div id="classes"
+     style="margin-top:15px">
+</div>
+
+</section>
+
+<br>
+
+<section class="card">
+
+<h2>Student Progress</h2>
+
+<input id="studentName"
+       placeholder="Student name">
+
+<input id="studentEmail"
+       placeholder="Student email">
+
+<button onclick="createStudent()">
+Add Student
+</button>
+
+<div id="students"
+     style="margin-top:15px">
+</div>
+
+</section>
+
+<br>
+
+<section class="card">
+
+<h2>Teaching Material</h2>
+
+<textarea id="material"
+          placeholder="Paste or generate teaching material here..."></textarea>
+
+<div class="tools">
+
+<button onclick="copyMaterial()">
+Copy
+</button>
+
+<button onclick="saveMaterial()">
+Save Material
+</button>
+
+<button onclick="exportFile('pdf')">
+Export PDF
+</button>
+
+<button onclick="exportFile('word')">
+Export Word
+</button>
+
+<button onclick="exportPowerPoint()">
+PowerPoint
+</button>
+
+</div>
+
+</section>
+
+<pre id="output">
+VECTOR Education Studio is ready.
+</pre>
+
+</main>
+
+<script>
+
+let lastContent = '';
+
+async function generate(endpoint){
+
+  const subject =
+    document.getElementById('subject').value;
+
+  const topic =
+    document.getElementById('topic').value;
+
+  const level =
+    document.getElementById('level').value;
+
+  const body = {
+    subject,
+    topic,
+    level,
+    topics: topic,
+    assignment: topic,
+    totalMarks: 100,
+    questions: 10
+  };
+
+  const output =
+    document.getElementById('output');
+
+  output.textContent =
+    'VECTOR is creating your educational material...';
+
+  try{
+
+    const response =
+      await fetch(endpoint,{
+        method:'POST',
+        headers:{
+          'Content-Type':'application/json'
+        },
+        body:JSON.stringify(body)
+      });
+
+    const data =
+      await response.json();
+
+    lastContent =
+      data.content || data.error || '';
+
+    output.textContent =
+      lastContent;
+
+    document.getElementById('material')
+      .value = lastContent;
+
+  }catch(error){
+
+    output.textContent =
+      'VECTOR error: ' + error.message;
+  }
+}
+
+async function copyMaterial(){
+
+  const text =
+    document.getElementById('material').value;
+
+  if(!text) return;
+
+  await navigator.clipboard.writeText(text);
+
+  alert('Teaching material copied.');
+}
+
+async function saveMaterial(){
+
+  const content =
+    document.getElementById('material').value;
+
+  const title =
+    document.getElementById('topic').value ||
+    'VECTOR Teaching Material';
+
+  const response =
+    await fetch('/api/education/materials',{
+      method:'POST',
+      headers:{
+        'Content-Type':'application/json'
+      },
+      body:JSON.stringify({
+        title,
+        subject:
+          document.getElementById('subject').value,
+        content
+      })
+    });
+
+  const data =
+    await response.json();
+
+  alert(
+    data.ok
+      ? 'Teaching material saved.'
+      : data.error
+  );
+}
+
+async function exportFile(format){
+
+  const content =
+    document.getElementById('material').value;
+
+  const title =
+    document.getElementById('topic').value ||
+    'VECTOR Education Material';
+
+  const response =
+    await fetch(
+      '/api/education/export/' + format,
+      {
+        method:'POST',
+        headers:{
+          'Content-Type':'application/json'
+        },
+        body:JSON.stringify({
+          title,
+          content
+        })
+      }
+    );
+
+  const data =
+    await response.json();
+
+  if(data.download){
+
+    window.open(
+      data.download,
+      '_blank'
+    );
+
+  }else{
+
+    alert(data.error || 'Export failed');
+  }
+}
+
+async function exportPowerPoint(){
+
+  const title =
+    document.getElementById('topic').value ||
+    'VECTOR Education Presentation';
+
+  const content =
+    document.getElementById('material').value;
+
+  const lines =
+    content
+      .split('\n')
+      .filter(Boolean);
+
+  const slides = [];
+
+  let current = {
+    title,
+    bullets:[]
+  };
+
+  for(const line of lines){
+
+    if(
+      line.length < 90 &&
+      (
+        line.endsWith(':') ||
+        /^(\d+\.|Slide)/i.test(line)
+      )
+    ){
+
+      if(current.bullets.length){
+
+        slides.push(current);
+      }
+
+      current = {
+        title:line,
+        bullets:[]
+      };
+
+    }else{
+
+      current.bullets.push(line);
+    }
+  }
+
+  if(current.bullets.length){
+    slides.push(current);
+  }
+
+  const response =
+    await fetch(
+      '/api/education/export/powerpoint',
+      {
+        method:'POST',
+        headers:{
+          'Content-Type':'application/json'
+        },
+        body:JSON.stringify({
+          title,
+          slides:slides.slice(0,30)
+        })
+      }
+    );
+
+  const data =
+    await response.json();
+
+  if(data.download){
+
+    window.open(
+      data.download,
+      '_blank'
+    );
+
+  }else{
+
+    alert(data.error || 'PowerPoint export failed');
+  }
+}
+
+async function createClass(){
+
+  const name =
+    document.getElementById('className').value;
+
+  const teacher =
+    document.getElementById('teacher').value;
+
+  if(!name){
+
+    alert('Enter a class name.');
+
+    return;
+  }
+
+  await fetch(
+    '/api/education/classes',
+    {
+      method:'POST',
+      headers:{
+        'Content-Type':'application/json'
+      },
+      body:JSON.stringify({
+        name,
+        teacher,
+        subject:
+          document.getElementById('subject').value,
+        level:
+          document.getElementById('level').value
+      })
+    }
+  );
+
+  loadClasses();
+}
+
+async function loadClasses(){
+
+  const response =
+    await fetch(
+      '/api/education/classes'
+    );
+
+  const data =
+    await response.json();
+
+  document.getElementById('classes')
+    .innerHTML =
+    data.classes
+      .map(x =>
+        `<div class="card">
+          <strong>${escapeHtml(x.name)}</strong>
+          <p>${escapeHtml(x.teacher || '')}</p>
+        </div>`
+      )
+      .join('');
+}
+
+async function createStudent(){
+
+  const name =
+    document.getElementById('studentName').value;
+
+  const email =
+    document.getElementById('studentEmail').value;
+
+  if(!name){
+
+    alert('Enter student name.');
+
+    return;
+  }
+
+  await fetch(
+    '/api/education/students',
+    {
+      method:'POST',
+      headers:{
+        'Content-Type':'application/json'
+      },
+      body:JSON.stringify({
+        name,
+        email
+      })
+    }
+  );
+
+  loadStudents();
+}
+
+async function loadStudents(){
+
+  const response =
+    await fetch(
+      '/api/education/students'
+    );
+
+  const data =
+    await response.json();
+
+  document.getElementById('students')
+    .innerHTML =
+    data.students
+      .map(x =>
+        `<div class="card">
+          <strong>${escapeHtml(x.name)}</strong>
+          <p>${escapeHtml(x.email || '')}</p>
+        </div>`
+      )
+      .join('');
+}
+
+function escapeHtml(value){
+
+  return String(value)
+    .replaceAll('&','&amp;')
+    .replaceAll('<','&lt;')
+    .replaceAll('>','&gt;')
+    .replaceAll('"','&quot;')
+    .replaceAll("'","&#039;");
+}
+
+loadClasses();
+loadStudents();
+
+</script>
+
+</body>
+</html>

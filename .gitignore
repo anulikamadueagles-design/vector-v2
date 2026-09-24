@@ -1,0 +1,21 @@
+node_modules/
+.env
+.env.*
+!.env.example
+
+exports/*
+!exports/.gitkeep
+
+*.log
+npm-debug.log*
+.DS_Store
+
+# Android / Expo
+.android/
+.gradle/
+.expo/
+
+# Backups
+*.backup
+*.backup-*
+*-backup-*

@@ -1,0 +1,12 @@
+[
+  {
+    "id": "student_1790288084164_8isfo0",
+    "studentId": "ECO001",
+    "name": "Demo Student",
+    "email": "student@example.com",
+    "classId": "",
+    "department": "Economics",
+    "programme": "BSc Economics",
+    "createdAt": "2026-09-24T22:14:44.164Z"
+  }
+]

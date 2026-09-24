@@ -1,0 +1,1 @@
+const jwt=require('jsonwebtoken');exports.auth=(required=true)=>(req,res,next)=>{const h=req.headers.authorization||'',t=h.startsWith('Bearer ')?h.slice(7):null;if(!t){if(required)return res.status(401).json({error:'Authentication required'});return next()}try{req.user=jwt.verify(t,process.env.JWT_SECRET);next()}catch(e){res.status(401).json({error:'Invalid or expired token'})}};

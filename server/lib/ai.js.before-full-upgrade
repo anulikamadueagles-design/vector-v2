@@ -1,0 +1,134 @@
+const https = require('https');
+
+function postJSON(url, body, headers = {}) {
+  return new Promise((resolve, reject) => {
+    const u = new URL(url);
+
+    const req = https.request({
+      hostname: u.hostname,
+      port: u.port || 443,
+      path: u.pathname + u.search,
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        ...headers
+      }
+    }, res => {
+      let data = '';
+
+      res.on('data', chunk => {
+        data += chunk;
+      });
+
+      res.on('end', () => {
+        let parsed;
+
+        try {
+          parsed = JSON.parse(data);
+        } catch {
+          parsed = { raw: data };
+        }
+
+        if (res.statusCode < 200 || res.statusCode >= 300) {
+          return reject(
+            new Error(
+              parsed?.error?.message ||
+              parsed?.error ||
+              parsed?.message ||
+              `AI provider returned HTTP ${res.statusCode}`
+            )
+          );
+        }
+
+        resolve(parsed);
+      });
+    });
+
+    req.on('error', reject);
+
+    req.write(JSON.stringify(body));
+    req.end();
+  });
+}
+
+function extractText(data) {
+  return (
+    data?.choices?.[0]?.message?.content ||
+    data?.choices?.[0]?.text ||
+    data?.output_text ||
+    data?.content ||
+    data?.message?.content ||
+    data?.response ||
+    data?.text ||
+    ''
+  );
+}
+
+async function callAI({ messages = [], model }) {
+  /*
+   * VECTOR supports an OpenAI-compatible provider.
+   *
+   * Configure:
+   *
+   * AI_API_URL=https://your-provider/v1/chat/completions
+   * AI_API_KEY=your-key
+   * AI_MODEL=your-model
+   */
+
+  const apiUrl = process.env.AI_API_URL;
+  const apiKey = process.env.AI_API_KEY;
+  const selectedModel = model || process.env.AI_MODEL || 'gpt-4o-mini';
+
+  if (!apiUrl || !apiKey) {
+    const lastUser =
+      messages
+        .filter(x => x.role === 'user')
+        .at(-1)?.content || '';
+
+    return {
+      content:
+`VECTOR is online, but no production AI provider is connected yet.
+
+Your message was received successfully:
+
+"${lastUser}"
+
+To activate real AI responses, add AI_API_URL and AI_API_KEY to .env.
+
+VECTOR's interface, search, image generation, files, memory, projects and agent framework remain available.`,
+      provider: 'local-fallback',
+      model: 'fallback'
+    };
+  }
+
+  const payload = {
+    model: selectedModel,
+    messages,
+    temperature: 0.7
+  };
+
+  const data = await postJSON(
+    apiUrl,
+    payload,
+    {
+      authorization: `Bearer ${apiKey}`
+    }
+  );
+
+  const content = extractText(data);
+
+  if (!content) {
+    throw new Error('AI provider returned an empty response');
+  }
+
+  return {
+    content,
+    provider: 'external',
+    model: selectedModel,
+    raw: data
+  };
+}
+
+module.exports = {
+  callAI
+};

@@ -1,0 +1,1734 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#050914">
+<title>VECTOR — AI Assistant</title>
+
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+
+:root{
+ --bg:#050914;
+ --panel:#080d19;
+ --panel2:#0c1423;
+ --line:rgba(100,150,220,.16);
+ --text:#f4f7ff;
+ --muted:#7e8da8;
+ --cyan:#36d9ff;
+ --blue:#477cff;
+ --purple:#766cff;
+ --green:#36e6a2;
+ --red:#ff5577;
+}
+
+html,body{
+ width:100%;
+ height:100%;
+ overflow:hidden;
+ background:var(--bg);
+ color:var(--text);
+ font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif
+}
+
+button,input,textarea,select{font:inherit}
+button{border:0;cursor:pointer}
+
+.app{
+ width:100%;
+ height:100dvh;
+ display:flex;
+ overflow:hidden;
+ position:relative;
+ background:
+ radial-gradient(circle at 50% 25%,rgba(45,105,255,.10),transparent 32%),
+ radial-gradient(circle at 85% 90%,rgba(0,220,255,.06),transparent 30%),
+ var(--bg)
+}
+
+.grid{
+ position:absolute;
+ inset:0;
+ pointer-events:none;
+ opacity:.25;
+ background-image:
+ linear-gradient(rgba(75,120,190,.12) 1px,transparent 1px),
+ linear-gradient(90deg,rgba(75,120,190,.12) 1px,transparent 1px);
+ background-size:72px 72px;
+ mask-image:linear-gradient(to bottom,#000 0%,#000 65%,transparent 100%)
+}
+
+.sidebar{
+ width:285px;
+ height:100%;
+ flex:none;
+ background:rgba(6,11,22,.96);
+ border-right:1px solid var(--line);
+ display:flex;
+ flex-direction:column;
+ position:relative;
+ z-index:30;
+ transition:.25s
+}
+
+.brand{
+ height:72px;
+ display:flex;
+ align-items:center;
+ gap:12px;
+ padding:0 20px;
+ border-bottom:1px solid var(--line)
+}
+
+.logo{
+ width:40px;
+ height:40px;
+ border-radius:12px;
+ display:grid;
+ place-items:center;
+ font-weight:900;
+ font-size:20px;
+ background:linear-gradient(135deg,var(--cyan),var(--blue),var(--purple));
+ box-shadow:0 0 28px rgba(54,217,255,.22)
+}
+
+.brand-name{
+ font-size:17px;
+ font-weight:850;
+ letter-spacing:3px
+}
+
+.brand-sub{
+ color:#64728a;
+ font-size:9px;
+ letter-spacing:1.5px;
+ margin-top:2px
+}
+
+.new-chat{
+ margin:18px 14px 10px;
+ padding:13px 15px;
+ color:#fff;
+ border-radius:13px;
+ background:linear-gradient(135deg,rgba(54,217,255,.13),rgba(71,124,255,.10));
+ border:1px solid rgba(54,217,255,.2);
+ font-weight:700;
+ text-align:left
+}
+
+.nav{
+ padding:7px 12px
+}
+
+.nav button{
+ width:100%;
+ padding:11px 12px;
+ margin-bottom:3px;
+ display:flex;
+ align-items:center;
+ gap:12px;
+ color:#95a3ba;
+ background:transparent;
+ border-radius:10px;
+ text-align:left
+}
+
+.nav button:hover,.nav button.active{
+ color:#fff;
+ background:rgba(255,255,255,.055)
+}
+
+.nav-icon{
+ width:22px;
+ text-align:center
+}
+
+.history{
+ flex:1;
+ overflow:auto;
+ padding:12px 14px
+}
+
+.history-title{
+ color:#56647a;
+ font-size:10px;
+ text-transform:uppercase;
+ letter-spacing:1.5px;
+ padding:8px
+}
+
+.history-item{
+ padding:10px;
+ border-radius:9px;
+ color:#8290a7;
+ font-size:12px;
+ white-space:nowrap;
+ overflow:hidden;
+ text-overflow:ellipsis
+}
+
+.sidebar-footer{
+ padding:14px;
+ border-top:1px solid var(--line)
+}
+
+.owner{
+ display:flex;
+ align-items:center;
+ gap:10px
+}
+
+.avatar{
+ width:35px;
+ height:35px;
+ border-radius:50%;
+ display:grid;
+ place-items:center;
+ font-weight:800;
+ font-size:12px;
+ background:linear-gradient(135deg,#173b72,#146a8d)
+}
+
+.owner-name{
+ font-size:12px;
+ font-weight:700
+}
+
+.owner-sub{
+ color:#65738b;
+ font-size:9px;
+ margin-top:2px
+}
+
+.main{
+ min-width:0;
+ flex:1;
+ height:100%;
+ display:flex;
+ flex-direction:column;
+ position:relative
+}
+
+.topbar{
+ height:72px;
+ flex:none;
+ display:flex;
+ align-items:center;
+ justify-content:space-between;
+ padding:0 20px;
+ border-bottom:1px solid var(--line);
+ background:rgba(5,9,20,.72);
+ backdrop-filter:blur(18px);
+ z-index:20
+}
+
+.top-left{
+ display:flex;
+ align-items:center;
+ gap:12px
+}
+
+.mobile-menu{
+ display:none;
+ width:40px;
+ height:40px;
+ border-radius:10px;
+ background:#0c1424;
+ color:#fff
+}
+
+.session-title{
+ font-size:14px;
+ font-weight:750
+}
+
+.session-status{
+ margin-top:3px;
+ font-size:10px;
+ color:#68778f
+}
+
+.top-actions{
+ display:flex;
+ align-items:center;
+ gap:8px
+}
+
+.model{
+ height:38px;
+ max-width:200px;
+ padding:0 12px;
+ border-radius:11px;
+ border:1px solid var(--line);
+ background:#0a1120;
+ color:#b9c8df;
+ outline:none
+}
+
+.icon-btn{
+ width:38px;
+ height:38px;
+ border-radius:10px;
+ color:#9ba9c0;
+ background:#0a1120;
+ border:1px solid var(--line)
+}
+
+.icon-btn:hover{
+ color:#fff;
+ border-color:rgba(54,217,255,.3)
+}
+
+.chat{
+ flex:1;
+ overflow-y:auto;
+ padding:35px 24px 180px;
+ position:relative;
+ z-index:2
+}
+
+.empty{
+ max-width:850px;
+ margin:8vh auto 0;
+ text-align:center
+}
+
+.vector-symbol{
+ width:78px;
+ height:78px;
+ margin:0 auto 24px;
+ position:relative;
+ display:grid;
+ place-items:center
+}
+
+.vector-symbol:before{
+ content:"";
+ position:absolute;
+ width:54px;
+ height:54px;
+ border-left:4px solid var(--cyan);
+ border-top:4px solid var(--cyan);
+ transform:rotate(45deg);
+ filter:drop-shadow(0 0 12px rgba(54,217,255,.55))
+}
+
+.vector-symbol:after{
+ content:"";
+ position:absolute;
+ width:8px;
+ height:8px;
+ border-radius:50%;
+ background:var(--cyan);
+ right:2px;
+ top:6px;
+ box-shadow:0 0 20px var(--cyan)
+}
+
+.empty h1{
+ font-size:clamp(34px,5vw,58px);
+ line-height:1.05;
+ letter-spacing:-2px;
+ margin-bottom:15px
+}
+
+.gradient{
+ background:linear-gradient(90deg,var(--cyan),#4e96ff,var(--purple));
+ -webkit-background-clip:text;
+ background-clip:text;
+ color:transparent
+}
+
+.empty p{
+ max-width:650px;
+ margin:auto;
+ color:#7e8ca5;
+ font-size:15px;
+ line-height:1.7
+}
+
+.quick-actions{
+ display:grid;
+ grid-template-columns:repeat(4,1fr);
+ gap:10px;
+ max-width:780px;
+ margin:34px auto 0
+}
+
+.quick{
+ border:1px solid var(--line);
+ background:rgba(8,14,27,.76);
+ border-radius:14px;
+ padding:15px 12px;
+ color:#a8b4c9;
+ text-align:left;
+ transition:.2s
+}
+
+.quick:hover{
+ border-color:rgba(54,217,255,.35);
+ transform:translateY(-2px)
+}
+
+.quick strong{
+ display:block;
+ color:#e8effb;
+ font-size:12px;
+ margin-bottom:5px
+}
+
+.quick span{
+ color:#64738b;
+ font-size:10px
+}
+
+.messages{
+ max-width:850px;
+ margin:auto
+}
+
+.message{
+ display:flex;
+ gap:12px;
+ margin:20px 0
+}
+
+.message.user{
+ justify-content:flex-end
+}
+
+.bubble{
+ max-width:80%;
+ padding:13px 16px;
+ border-radius:17px;
+ line-height:1.65;
+ font-size:14px;
+ white-space:pre-wrap;
+ overflow-wrap:anywhere
+}
+
+.user .bubble{
+ background:linear-gradient(135deg,#166dca,#4569ed);
+ color:#fff;
+ border-bottom-right-radius:5px
+}
+
+.ai .bubble{
+ background:rgba(10,17,31,.9);
+ border:1px solid var(--line);
+ color:#dce5f4;
+ border-bottom-left-radius:5px
+}
+
+.generated-image{
+ width:100%;
+ max-width:700px;
+ border-radius:15px;
+ margin-top:8px;
+ display:block
+}
+
+.composer-wrap{
+ position:absolute;
+ z-index:15;
+ left:0;
+ right:0;
+ bottom:0;
+ padding:18px 24px calc(18px + env(safe-area-inset-bottom));
+ background:linear-gradient(transparent,rgba(5,9,20,.95) 30%)
+}
+
+.composer{
+ max-width:850px;
+ margin:auto;
+ padding:10px;
+ border:1px solid rgba(103,150,220,.22);
+ background:rgba(8,14,27,.94);
+ border-radius:20px;
+ box-shadow:0 15px 50px rgba(0,0,0,.4),0 0 35px rgba(50,110,255,.05);
+ backdrop-filter:blur(20px)
+}
+
+.tools{
+ display:flex;
+ gap:5px;
+ padding:2px 4px 7px
+}
+
+.tool{
+ width:34px;
+ height:32px;
+ border-radius:9px;
+ background:transparent;
+ color:#8090aa
+}
+
+.tool:hover,.tool.active{
+ background:#111d31;
+ color:var(--cyan)
+}
+
+.prompt-row{
+ display:flex;
+ align-items:flex-end;
+ gap:8px
+}
+
+textarea{
+ flex:1;
+ min-width:0;
+ resize:none;
+ max-height:140px;
+ padding:9px 8px;
+ border:0;
+ outline:none;
+ background:transparent;
+ color:#fff;
+ font-size:14px;
+ line-height:1.5
+}
+
+textarea::placeholder{
+ color:#56647a
+}
+
+.send{
+ width:43px;
+ height:43px;
+ border-radius:14px;
+ color:#fff;
+ font-size:19px;
+ background:linear-gradient(135deg,var(--cyan),var(--blue));
+ box-shadow:0 0 20px rgba(54,217,255,.16)
+}
+
+.hint{
+ text-align:center;
+ color:#4e5b70;
+ font-size:9px;
+ margin-top:8px
+}
+
+.modal{
+ position:fixed;
+ inset:0;
+ z-index:100;
+ display:none;
+ align-items:center;
+ justify-content:center;
+ padding:20px;
+ background:rgba(0,0,0,.74);
+ backdrop-filter:blur(12px)
+}
+
+.modal.open{
+ display:flex
+}
+
+.modal-card{
+ width:min(680px,100%);
+ max-height:90vh;
+ overflow:auto;
+ background:#09101d;
+ border:1px solid var(--line);
+ border-radius:20px;
+ padding:20px;
+ box-shadow:0 25px 80px rgba(0,0,0,.55)
+}
+
+.modal-head{
+ display:flex;
+ justify-content:space-between;
+ align-items:center;
+ margin-bottom:18px
+}
+
+.modal-head h2{
+ font-size:18px
+}
+
+.close{
+ width:34px;
+ height:34px;
+ border-radius:9px;
+ background:#111b2d;
+ color:#8d9bb0
+}
+
+.field{
+ margin-bottom:12px
+}
+
+.field label{
+ display:block;
+ margin-bottom:6px;
+ color:#78869d;
+ font-size:11px
+}
+
+.field input,.field textarea,.field select{
+ width:100%;
+ border:1px solid var(--line);
+ border-radius:11px;
+ background:#050b16;
+ color:#fff;
+ padding:11px;
+ outline:none
+}
+
+.field textarea{
+ min-height:100px;
+ resize:vertical
+}
+
+.primary{
+ width:100%;
+ height:44px;
+ border-radius:12px;
+ color:#fff;
+ font-weight:750;
+ background:linear-gradient(135deg,var(--cyan),var(--blue))
+}
+
+.secondary{
+ width:100%;
+ height:42px;
+ border-radius:11px;
+ color:#b5c2d6;
+ background:#101a2b;
+ margin-top:8px
+}
+
+.cards{
+ display:grid;
+ grid-template-columns:repeat(2,1fr);
+ gap:10px
+}
+
+.feature-card{
+ padding:14px;
+ border:1px solid var(--line);
+ border-radius:13px;
+ background:#080f1c
+}
+
+.feature-card strong{
+ display:block;
+ font-size:12px;
+ margin-bottom:5px
+}
+
+.feature-card span{
+ color:#6e7c93;
+ font-size:10px;
+ line-height:1.5
+}
+
+.status{
+ display:inline-flex;
+ align-items:center;
+ gap:6px;
+ color:var(--green);
+ font-size:10px
+}
+
+.status:before{
+ content:"";
+ width:7px;
+ height:7px;
+ border-radius:50%;
+ background:var(--green);
+ box-shadow:0 0 10px var(--green)
+}
+
+.login-box{
+ width:min(420px,100%)
+}
+
+.notice{
+ padding:10px 12px;
+ border-radius:10px;
+ background:#0c1626;
+ border:1px solid var(--line);
+ color:#8290a7;
+ font-size:11px;
+ line-height:1.5;
+ margin-bottom:12px
+}
+
+.hidden{
+ display:none!important
+}
+
+@media(max-width:850px){
+ .sidebar{
+  position:fixed;
+  left:-285px;
+  top:0;
+  bottom:0;
+  box-shadow:20px 0 60px rgba(0,0,0,.5)
+ }
+ .sidebar.open{left:0}
+ .mobile-menu{display:block}
+ .quick-actions{grid-template-columns:repeat(2,1fr)}
+ .topbar{padding:0 12px}
+ .model{max-width:145px}
+}
+
+@media(max-width:560px){
+ .quick-actions{grid-template-columns:1fr 1fr}
+ .chat{padding:25px 12px 175px}
+ .composer-wrap{padding:12px 10px calc(12px + env(safe-area-inset-bottom))}
+ .bubble{max-width:90%}
+ .top-actions .icon-btn:nth-child(2){display:none}
+ .empty{margin-top:5vh}
+ .empty h1{font-size:36px}
+ .cards{grid-template-columns:1fr}
+}
+</style>
+</head>
+
+<body>
+
+<div class="app">
+<div class="grid"></div>
+
+<aside class="sidebar" id="sidebar">
+
+<div class="brand">
+<div class="logo">V</div>
+<div>
+<div class="brand-name">VECTOR</div>
+<div class="brand-sub">AI INTELLIGENCE PLATFORM</div>
+</div>
+</div>
+
+<button class="new-chat" onclick="newChat()">＋ New conversation</button>
+
+<nav class="nav">
+
+<button class="active" onclick="showHome(this)">
+<span class="nav-icon">⌂</span> Chat
+</button>
+
+<button onclick="openImageModal()">
+<span class="nav-icon">✦</span> Image generation
+</button>
+
+<button onclick="openSearchModal()">
+<span class="nav-icon">⌕</span> Web search
+</button>
+
+<button onclick="openFilesModal()">
+<span class="nav-icon">▣</span> Files
+</button>
+
+<button onclick="openMemoryModal()">
+<span class="nav-icon">◈</span> Memory
+</button>
+
+<button onclick="openProjectsModal()">
+<span class="nav-icon">▤</span> Projects
+</button>
+
+<button onclick="openAgentModal()">
+<span class="nav-icon">◇</span> Agents
+</button>
+
+<button onclick="openAssistantsModal()">
+<span class="nav-icon">◎</span> Assistants
+</button>
+
+</nav>
+
+<div class="history" id="history">
+<div class="history-title">Recent conversations</div>
+</div>
+
+<div class="sidebar-footer">
+
+<div class="owner">
+<div class="avatar">D</div>
+<div>
+<div class="owner-name">David Kamsi Elvis</div>
+<div class="owner-sub">Vector's Element Tech</div>
+</div>
+</div>
+
+</div>
+
+</aside>
+
+<main class="main">
+
+<header class="topbar">
+
+<div class="top-left">
+
+<button class="mobile-menu" onclick="toggleSidebar()">☰</button>
+
+<div>
+<div class="session-title" id="sessionTitle">VECTOR</div>
+<div class="session-status">
+<span class="status">System online</span>
+</div>
+</div>
+
+</div>
+
+<div class="top-actions">
+
+<select class="model" id="model">
+<option value="">Auto model</option>
+<option value="gpt-4o-mini">GPT compatible</option>
+<option value="claude">Claude compatible</option>
+<option value="gemini">Gemini compatible</option>
+<option value="deepseek">DeepSeek compatible</option>
+</select>
+
+<button class="icon-btn" onclick="toggleVoice()" title="Voice">🎙</button>
+<button class="icon-btn" onclick="openSettingsModal()" title="Settings">⚙</button>
+
+</div>
+
+</header>
+
+<section class="chat" id="chat">
+
+<div class="empty" id="empty">
+
+<div class="vector-symbol"></div>
+
+<h1>
+Hello, I'm <span class="gradient">VECTOR</span>
+</h1>
+
+<p>
+Your AI workspace for conversation, research, creation, files,
+projects, agents and everyday work — designed by Vector's Element Tech.
+</p>
+
+<div class="quick-actions">
+
+<button class="quick" onclick="quick('Research the latest developments in artificial intelligence')">
+<strong>🌐 Research</strong>
+<span>Search the web</span>
+</button>
+
+<button class="quick" onclick="openImageModal()">
+<strong>🎨 Create</strong>
+<span>Generate an image</span>
+</button>
+
+<button class="quick" onclick="openFilesModal()">
+<strong>📎 Analyse</strong>
+<span>Upload a file</span>
+</button>
+
+<button class="quick" onclick="openAgentModal()">
+<strong>🤖 Agent</strong>
+<span>Build a plan</span>
+</button>
+
+</div>
+</div>
+
+<div class="messages" id="messages"></div>
+
+</section>
+
+<div class="composer-wrap">
+
+<div class="composer">
+
+<div class="tools">
+
+<button class="tool" onclick="openFilesModal()" title="Files">📎</button>
+<button class="tool" onclick="openSearchModal()" title="Search">⌕</button>
+<button class="tool" onclick="openImageModal()" title="Image">✦</button>
+<button class="tool" onclick="toggleVoice()" title="Voice">🎙</button>
+<button class="tool" onclick="openMemoryModal()" title="Memory">◈</button>
+
+</div>
+
+<div class="prompt-row">
+
+<textarea id="prompt" rows="1" placeholder="Message VECTOR..."></textarea>
+
+<button class="send" id="send" onclick="sendMessage()">➤</button>
+
+</div>
+
+<div class="hint">
+VECTOR can make mistakes. Verify important information.
+</div>
+
+</div>
+
+</div>
+
+</main>
+</div>
+
+<!-- LOGIN -->
+
+<div class="modal" id="loginModal">
+
+<div class="modal-card login-box">
+
+<div class="modal-head">
+<h2>Welcome to VECTOR</h2>
+<button class="close" onclick="closeModal('loginModal')">×</button>
+</div>
+
+<div class="notice">
+Create an account or sign in to unlock conversations, memory,
+projects, files and agents.
+</div>
+
+<div class="field">
+<label>Email</label>
+<input id="authEmail" type="email" placeholder="you@example.com">
+</div>
+
+<div class="field">
+<label>Password</label>
+<input id="authPassword" type="password" placeholder="Minimum 8 characters">
+</div>
+
+<div class="field">
+<label>Display name</label>
+<input id="authName" placeholder="Your name">
+</div>
+
+<button class="primary" onclick="register()">Create account</button>
+<button class="secondary" onclick="login()">Sign in</button>
+
+<div id="authMessage" class="notice hidden" style="margin-top:12px"></div>
+
+</div>
+</div>
+
+<!-- IMAGE -->
+
+<div class="modal" id="imageModal">
+
+<div class="modal-card">
+
+<div class="modal-head">
+<h2>VECTOR Image Studio</h2>
+<button class="close" onclick="closeModal('imageModal')">×</button>
+</div>
+
+<div class="field">
+<label>Describe the image you want</label>
+<textarea id="imagePrompt" placeholder="A cinematic futuristic Abuja skyline at night, premium architectural photography, elegant lighting..."></textarea>
+</div>
+
+<div class="field">
+<label>Image model</label>
+<select id="imageModel">
+<option value="sana">Sana</option>
+<option value="flux">Flux</option>
+</select>
+</div>
+
+<button class="primary" onclick="generateImage()">Generate image</button>
+
+<div id="imageResult"></div>
+
+</div>
+</div>
+
+<!-- SEARCH -->
+
+<div class="modal" id="searchModal">
+
+<div class="modal-card">
+
+<div class="modal-head">
+<h2>Web Search</h2>
+<button class="close" onclick="closeModal('searchModal')">×</button>
+</div>
+
+<div class="field">
+<label>Search the web</label>
+<input id="searchInput" placeholder="Search anything...">
+</div>
+
+<button class="primary" onclick="searchWeb()">Search</button>
+
+<div id="searchResults" style="margin-top:15px"></div>
+
+</div>
+</div>
+
+<!-- FILES -->
+
+<div class="modal" id="filesModal">
+
+<div class="modal-card">
+
+<div class="modal-head">
+<h2>File Intelligence</h2>
+<button class="close" onclick="closeModal('filesModal')">×</button>
+</div>
+
+<div class="notice">
+Upload text, JSON, CSV, Markdown, JavaScript, HTML or CSS files.
+Binary files are detected and reported by the server.
+</div>
+
+<div class="field">
+<label>Select file</label>
+<input id="fileInput" type="file">
+</div>
+
+<button class="primary" onclick="analyzeFile()">Analyse file</button>
+
+<div id="fileResult" style="margin-top:15px"></div>
+
+</div>
+</div>
+
+<!-- MEMORY -->
+
+<div class="modal" id="memoryModal">
+
+<div class="modal-card">
+
+<div class="modal-head">
+<h2>VECTOR Memory</h2>
+<button class="close" onclick="closeModal('memoryModal')">×</button>
+</div>
+
+<div class="field">
+<label>Remember something</label>
+<textarea id="memoryInput" placeholder="Remember that I prefer concise business writing..."></textarea>
+</div>
+
+<button class="primary" onclick="saveMemory()">Save memory</button>
+
+<div id="memoryList" style="margin-top:15px"></div>
+
+</div>
+</div>
+
+<!-- PROJECTS -->
+
+<div class="modal" id="projectsModal">
+
+<div class="modal-card">
+
+<div class="modal-head">
+<h2>Projects</h2>
+<button class="close" onclick="closeModal('projectsModal')">×</button>
+</div>
+
+<div class="field">
+<label>Project name</label>
+<input id="projectName" placeholder="My project">
+</div>
+
+<div class="field">
+<label>Description</label>
+<textarea id="projectDescription" placeholder="What is this project about?"></textarea>
+</div>
+
+<button class="primary" onclick="createProject()">Create project</button>
+
+<div id="projectList" style="margin-top:15px"></div>
+
+</div>
+</div>
+
+<!-- AGENT -->
+
+<div class="modal" id="agentModal">
+
+<div class="modal-card">
+
+<div class="modal-head">
+<h2>VECTOR Agent</h2>
+<button class="close" onclick="closeModal('agentModal')">×</button>
+</div>
+
+<div class="notice">
+Give VECTOR a goal. The agent produces a structured plan.
+It does not claim external actions were executed unless the server actually performs them.
+</div>
+
+<div class="field">
+<label>Goal</label>
+<textarea id="agentGoal" placeholder="Create a launch plan for my SaaS..."></textarea>
+</div>
+
+<button class="primary" onclick="runAgent()">Run agent</button>
+
+<div id="agentResult" style="margin-top:15px"></div>
+
+</div>
+</div>
+
+<!-- ASSISTANTS -->
+
+<div class="modal" id="assistantsModal">
+
+<div class="modal-card">
+
+<div class="modal-head">
+<h2>Custom Assistants</h2>
+<button class="close" onclick="closeModal('assistantsModal')">×</button>
+</div>
+
+<div class="field">
+<label>Name</label>
+<input id="assistantName" placeholder="My Assistant">
+</div>
+
+<div class="field">
+<label>Description</label>
+<input id="assistantDescription" placeholder="What should it do?">
+</div>
+
+<div class="field">
+<label>Instructions</label>
+<textarea id="assistantInstructions" placeholder="Give the assistant its behaviour and responsibilities..."></textarea>
+</div>
+
+<button class="primary" onclick="createAssistant()">Create assistant</button>
+
+<div id="assistantList" style="margin-top:15px"></div>
+
+</div>
+</div>
+
+<!-- SETTINGS -->
+
+<div class="modal" id="settingsModal">
+
+<div class="modal-card">
+
+<div class="modal-head">
+<h2>VECTOR Settings</h2>
+<button class="close" onclick="closeModal('settingsModal')">×</button>
+</div>
+
+<div class="cards">
+
+<div class="feature-card">
+<strong>AI Platform</strong>
+<span>VECTOR v2.0.0</span>
+</div>
+
+<div class="feature-card">
+<strong>Image Engine</strong>
+<span>Pollinations</span>
+</div>
+
+<div class="feature-card">
+<strong>Web Search</strong>
+<span>DuckDuckGo search endpoint</span>
+</div>
+
+<div class="feature-card">
+<strong>Owner</strong>
+<span>David Kamsi Elvis — Vector's Element Tech</span>
+</div>
+
+</div>
+
+<button class="secondary" onclick="openLogin()">Account / Authentication</button>
+
+<button class="secondary" onclick="logout()">Sign out locally</button>
+
+</div>
+</div>
+
+<script>
+let token=localStorage.getItem('vector_token')||'';
+let conversationId=localStorage.getItem('vector_conversation')||'';
+let tts=false;
+let recognition=null;
+
+const $=id=>document.getElementById(id);
+
+function openModal(id){
+ $(id).classList.add('open');
+}
+
+function closeModal(id){
+ $(id).classList.remove('open');
+}
+
+function toggleSidebar(){
+ $('sidebar').classList.toggle('open');
+}
+
+function openLogin(){openModal('loginModal')}
+function openImageModal(){openModal('imageModal')}
+function openSearchModal(){openModal('searchModal')}
+function openFilesModal(){openModal('filesModal')}
+function openMemoryModal(){openModal('memoryModal');loadMemory()}
+function openProjectsModal(){openModal('projectsModal');loadProjects()}
+function openAgentModal(){openModal('agentModal')}
+function openAssistantsModal(){openModal('assistantsModal');loadAssistants()}
+function openSettingsModal(){openModal('settingsModal')}
+
+async function api(url,options={}){
+ options.headers=options.headers||{};
+
+ if(token){
+  options.headers.Authorization='Bearer '+token;
+ }
+
+ const r=await fetch(url,options);
+
+ let data={};
+
+ try{
+  data=await r.json();
+ }catch{}
+
+ if(r.status===401){
+  openLogin();
+  throw new Error(data.error||'Authentication required');
+ }
+
+ if(!r.ok){
+  throw new Error(data.error||'Request failed');
+ }
+
+ return data;
+}
+
+function addMessage(role,text){
+ $('empty').classList.add('hidden');
+
+ const row=document.createElement('div');
+ row.className='message '+role;
+
+ const bubble=document.createElement('div');
+ bubble.className='bubble';
+ bubble.textContent=text;
+
+ row.appendChild(bubble);
+ $('messages').appendChild(row);
+
+ $('chat').scrollTop=$('chat').scrollHeight;
+
+ return bubble;
+}
+
+async function sendMessage(){
+ const input=$('prompt');
+ const text=input.value.trim();
+
+ if(!text)return;
+
+ input.value='';
+ input.style.height='auto';
+
+ addMessage('user',text);
+
+ const loading=addMessage('ai','VECTOR is thinking…');
+
+ try{
+
+  const data=await api('/api/chat',{
+   method:'POST',
+   headers:{'Content-Type':'application/json'},
+   body:JSON.stringify({
+    message:text,
+    conversationId:conversationId||undefined,
+    model:$('model').value||undefined
+   })
+  });
+
+  conversationId=data.conversationId||conversationId;
+
+  if(conversationId){
+   localStorage.setItem('vector_conversation',conversationId);
+  }
+
+  loading.textContent=data.content||'VECTOR returned an empty response.';
+
+  speak(data.content||'');
+
+ }catch(e){
+
+  loading.textContent=e.message;
+
+  if(!token){
+   openLogin();
+  }
+ }
+}
+
+function quick(text){
+ $('prompt').value=text;
+ sendMessage();
+}
+
+async function register(){
+
+ const email=$('authEmail').value.trim();
+ const password=$('authPassword').value;
+ const displayName=$('authName').value.trim();
+
+ if(!email||password.length<8){
+  return showAuth('Enter a valid email and an 8+ character password.');
+ }
+
+ try{
+
+  const data=await api('/api/auth/register',{
+   method:'POST',
+   headers:{'Content-Type':'application/json'},
+   body:JSON.stringify({email,password,displayName})
+  });
+
+  token=data.token;
+  localStorage.setItem('vector_token',token);
+
+  closeModal('loginModal');
+  showAuth('Account created.');
+
+ }catch(e){
+  showAuth(e.message);
+ }
+}
+
+async function login(){
+
+ const email=$('authEmail').value.trim();
+ const password=$('authPassword').value;
+
+ try{
+
+  const data=await api('/api/auth/login',{
+   method:'POST',
+   headers:{'Content-Type':'application/json'},
+   body:JSON.stringify({email,password})
+  });
+
+  token=data.token;
+
+  localStorage.setItem('vector_token',token);
+
+  closeModal('loginModal');
+
+ }catch(e){
+  showAuth(e.message);
+ }
+}
+
+function showAuth(text){
+ $('authMessage').textContent=text;
+ $('authMessage').classList.remove('hidden');
+}
+
+function logout(){
+ token='';
+ conversationId='';
+ localStorage.removeItem('vector_token');
+ localStorage.removeItem('vector_conversation');
+ closeModal('settingsModal');
+ alert('Signed out.');
+}
+
+async function generateImage(){
+
+ const prompt=$('imagePrompt').value.trim();
+
+ if(!prompt)return;
+
+ const result=$('imageResult');
+
+ result.innerHTML='<div class="notice">Generating image…</div>';
+
+ try{
+
+  const data=await api('/api/images/generate',{
+   method:'POST',
+   headers:{'Content-Type':'application/json'},
+   body:JSON.stringify({
+    prompt,
+    model:$('imageModel').value
+   })
+  });
+
+  result.innerHTML=`
+   <img class="generated-image" src="${escapeAttr(data.url)}" alt="Generated by VECTOR">
+   <button class="secondary" onclick="window.open('${escapeAttr(data.url)}','_blank')">Open full image</button>
+  `;
+
+ }catch(e){
+
+  result.innerHTML='<div class="notice">'+escapeHtml(e.message)+'</div>';
+ }
+}
+
+async function searchWeb(){
+
+ const q=$('searchInput').value.trim();
+
+ if(!q)return;
+
+ const box=$('searchResults');
+
+ box.innerHTML='<div class="notice">Searching…</div>';
+
+ try{
+
+  const data=await api('/api/search?q='+encodeURIComponent(q));
+
+  if(!data.results?.length){
+   box.innerHTML='<div class="notice">No results found.</div>';
+   return;
+  }
+
+  box.innerHTML=data.results.map(x=>`
+   <div class="feature-card" style="margin-bottom:8px">
+    <strong>${escapeHtml(x.title)}</strong>
+    <span>${escapeHtml(x.snippet||'')}</span>
+    <br>
+    <a href="${escapeAttr(x.url)}" target="_blank" style="color:#36d9ff;font-size:10px">Open source ↗</a>
+   </div>
+  `).join('');
+
+ }catch(e){
+
+  box.innerHTML='<div class="notice">'+escapeHtml(e.message)+'</div>';
+ }
+}
+
+async function analyzeFile(){
+
+ const file=$('fileInput').files[0];
+
+ if(!file)return;
+
+ const form=new FormData();
+
+ form.append('file',file);
+
+ $('fileResult').innerHTML='<div class="notice">Analysing file…</div>';
+
+ try{
+
+  const data=await api('/api/files/analyze',{
+   method:'POST',
+   body:form
+  });
+
+  $('fileResult').innerHTML=`
+   <div class="feature-card">
+    <strong>${escapeHtml(data.filename)}</strong>
+    <span>${escapeHtml(data.message||'Analysis complete.')}</span>
+    ${data.text?`<pre style="white-space:pre-wrap;margin-top:10px;color:#9eacc1;font-size:10px;max-height:260px;overflow:auto">${escapeHtml(data.text)}</pre>`:''}
+   </div>
+  `;
+
+ }catch(e){
+
+  $('fileResult').innerHTML='<div class="notice">'+escapeHtml(e.message)+'</div>';
+ }
+}
+
+async function saveMemory(){
+
+ const content=$('memoryInput').value.trim();
+
+ if(!content)return;
+
+ try{
+
+  await api('/api/memory',{
+   method:'POST',
+   headers:{'Content-Type':'application/json'},
+   body:JSON.stringify({content,source:'user'})
+  });
+
+  $('memoryInput').value='';
+  loadMemory();
+
+ }catch(e){
+
+  $('memoryList').innerHTML='<div class="notice">'+escapeHtml(e.message)+'</div>';
+ }
+}
+
+async function loadMemory(){
+
+ try{
+
+  const data=await api('/api/memory');
+
+  $('memoryList').innerHTML=data.length
+   ?data.map(x=>`
+    <div class="feature-card" style="margin-bottom:8px">
+     <span>${escapeHtml(x.content)}</span>
+    </div>
+   `).join('')
+   :'<div class="notice">No memories yet.</div>';
+
+ }catch(e){
+
+  $('memoryList').innerHTML='<div class="notice">'+escapeHtml(e.message)+'</div>';
+ }
+}
+
+async function createProject(){
+
+ const name=$('projectName').value.trim();
+
+ if(!name)return;
+
+ try{
+
+  await api('/api/projects',{
+   method:'POST',
+   headers:{'Content-Type':'application/json'},
+   body:JSON.stringify({
+    name,
+    description:$('projectDescription').value
+   })
+  });
+
+  $('projectName').value='';
+  $('projectDescription').value='';
+  loadProjects();
+
+ }catch(e){
+
+  $('projectList').innerHTML='<div class="notice">'+escapeHtml(e.message)+'</div>';
+ }
+}
+
+async function loadProjects(){
+
+ try{
+
+  const data=await api('/api/projects');
+
+  $('projectList').innerHTML=data.length
+   ?data.map(x=>`
+    <div class="feature-card" style="margin-bottom:8px">
+     <strong>${escapeHtml(x.name)}</strong>
+     <span>${escapeHtml(x.description||'')}</span>
+    </div>
+   `).join('')
+   :'<div class="notice">No projects yet.</div>';
+
+ }catch(e){
+
+  $('projectList').innerHTML='<div class="notice">'+escapeHtml(e.message)+'</div>';
+ }
+}
+
+async function runAgent(){
+
+ const goal=$('agentGoal').value.trim();
+
+ if(!goal)return;
+
+ $('agentResult').innerHTML='<div class="notice">VECTOR Agent is planning…</div>';
+
+ try{
+
+  const data=await api('/api/agents/run',{
+   method:'POST',
+   headers:{'Content-Type':'application/json'},
+   body:JSON.stringify({goal})
+  });
+
+  $('agentResult').innerHTML=`
+   <div class="feature-card">
+    <strong>Agent plan</strong>
+    <span style="white-space:pre-wrap">${escapeHtml(data.plan||'')}</span>
+   </div>
+  `;
+
+ }catch(e){
+
+  $('agentResult').innerHTML='<div class="notice">'+escapeHtml(e.message)+'</div>';
+ }
+}
+
+async function createAssistant(){
+
+ const name=$('assistantName').value.trim();
+
+ if(!name)return;
+
+ try{
+
+  await api('/api/assistants',{
+   method:'POST',
+   headers:{'Content-Type':'application/json'},
+   body:JSON.stringify({
+    name,
+    description:$('assistantDescription').value,
+    instructions:$('assistantInstructions').value
+   })
+  });
+
+  $('assistantName').value='';
+  $('assistantDescription').value='';
+  $('assistantInstructions').value='';
+
+  loadAssistants();
+
+ }catch(e){
+
+  $('assistantList').innerHTML='<div class="notice">'+escapeHtml(e.message)+'</div>';
+ }
+}
+
+async function loadAssistants(){
+
+ try{
+
+  const data=await api('/api/assistants');
+
+  $('assistantList').innerHTML=data.length
+   ?data.map(x=>`
+    <div class="feature-card" style="margin-bottom:8px">
+     <strong>${escapeHtml(x.name)}</strong>
+     <span>${escapeHtml(x.description||'')}</span>
+    </div>
+   `).join('')
+   :'<div class="notice">No custom assistants yet.</div>';
+
+ }catch(e){
+
+  $('assistantList').innerHTML='<div class="notice">'+escapeHtml(e.message)+'</div>';
+ }
+}
+
+function toggleVoice(){
+
+ if(!('SpeechRecognition' in window||'webkitSpeechRecognition' in window)){
+  alert('Voice recognition is not supported in this browser.');
+  return;
+ }
+
+ const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+
+ if(recognition){
+  recognition.stop();
+  recognition=null;
+  return;
+ }
+
+ recognition=new SR();
+
+ recognition.lang='en-US';
+ recognition.interimResults=false;
+
+ recognition.onresult=e=>{
+  $('prompt').value=e.results[0][0].transcript;
+ };
+
+ recognition.onend=()=>{
+  recognition=null;
+ };
+
+ recognition.start();
+}
+
+function speak(text){
+
+ if(!tts||!('speechSynthesis' in window))return;
+
+ speechSynthesis.cancel();
+
+ const u=new SpeechSynthesisUtterance(text);
+
+ speechSynthesis.speak(u);
+}
+
+function showHome(button){
+
+ document.querySelectorAll('.nav button').forEach(x=>x.classList.remove('active'));
+
+ if(button)button.classList.add('active');
+
+ $('sidebar').classList.remove('open');
+}
+
+function newChat(){
+
+ conversationId='';
+ localStorage.removeItem('vector_conversation');
+
+ $('messages').innerHTML='';
+ $('empty').classList.remove('hidden');
+ $('sessionTitle').textContent='VECTOR';
+
+ showHome();
+}
+
+function escapeHtml(value){
+
+ return String(value??'')
+  .replaceAll('&','&amp;')
+  .replaceAll('<','&lt;')
+  .replaceAll('>','&gt;')
+  .replaceAll('"','&quot;')
+  .replaceAll("'","&#039;");
+}
+
+function escapeAttr(value){
+
+ return escapeHtml(value);
+}
+
+$('prompt').addEventListener('keydown',e=>{
+
+ if(e.key==='Enter'&&!e.shiftKey){
+
+  e.preventDefault();
+  sendMessage();
+
+ }
+});
+
+$('prompt').addEventListener('input',e=>{
+
+ e.target.style.height='auto';
+ e.target.style.height=Math.min(e.target.scrollHeight,140)+'px';
+
+});
+
+async function boot(){
+
+ try{
+
+  const h=await fetch('/api/health');
+
+  if(h.ok){
+
+   const data=await h.json();
+
+   $('sessionTitle').textContent=data.name||'VECTOR';
+
+  }
+
+ }catch{}
+
+ if(!token){
+
+  // Do not force the login screen immediately.
+  // User can explore the public interface first.
+ }
+
+}
+
+boot();
+</script>
+
+</body>
+</html>

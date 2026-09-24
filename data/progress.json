@@ -1,0 +1,14 @@
+[
+  {
+    "id": "progress_1790288084241_7t62cy",
+    "studentId": "demo-student",
+    "classId": "demo-class",
+    "subject": "Economics",
+    "assessment": "Demand and Supply Test",
+    "score": 82,
+    "total": 100,
+    "percentage": 82,
+    "teacherNote": "Good understanding",
+    "createdAt": "2026-09-24T22:14:44.241Z"
+  }
+]

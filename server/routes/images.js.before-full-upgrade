@@ -1,0 +1,50 @@
+const r = require('express').Router();
+const { auth } = require('../middleware/auth');
+
+function pollinationsURL(prompt, model = 'sana') {
+  const clean = String(prompt || '').trim();
+
+  if (!clean) {
+    throw new Error('Image prompt is required');
+  }
+
+  return `https://image.pollinations.ai/prompt/${encodeURIComponent(clean)}?model=${encodeURIComponent(model)}&nologo=true`;
+}
+
+/*
+ * Pollinations is the default image engine.
+ *
+ * Optional future provider:
+ * IMAGE_API_URL
+ * IMAGE_API_KEY
+ */
+r.post('/generate', auth(), async (q, s) => {
+  try {
+    const prompt = String(q.body?.prompt || '').trim();
+
+    if (!prompt) {
+      return s.status(400).json({
+        error: 'prompt is required'
+      });
+    }
+
+    const model = q.body?.model || process.env.IMAGE_MODEL || 'sana';
+
+    const url = pollinationsURL(prompt, model);
+
+    s.json({
+      ok: true,
+      provider: 'pollinations',
+      model,
+      prompt,
+      url
+    });
+
+  } catch (e) {
+    s.status(400).json({
+      error: e.message
+    });
+  }
+});
+
+module.exports = r;
