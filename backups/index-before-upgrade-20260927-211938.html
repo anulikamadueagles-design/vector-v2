@@ -1133,26 +1133,6 @@ textarea::placeholder{
 }
 
 </style>
-
-<style>
-#vectorVideoModal{display:none;position:fixed;inset:0;z-index:1000;background:#030712eF;align-items:center;justify-content:center;padding:16px}
-#vectorVideoModal.open{display:flex}
-.vvideo-panel{width:min(650px,100%);max-height:90vh;overflow:auto;background:#0b1220;border:1px solid rgba(54,217,255,.25);border-radius:18px;padding:22px;box-shadow:0 25px 100px #000a}
-.vvideo-panel h2{font-size:22px;margin-bottom:6px}
-.vvideo-panel p{color:#94a3b8;font-size:13px;margin-bottom:18px}
-.vvideo-panel label{display:block;font-size:12px;color:#a8b6cc;margin:14px 0 7px}
-.vvideo-panel textarea,.vvideo-panel select{width:100%;background:#070d19;color:#f4f7ff;border:1px solid #263449;border-radius:10px;padding:12px;outline:none}
-.vvideo-panel textarea{min-height:120px;resize:vertical}
-.vvideo-row{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
-.vvideo-actions{display:flex;gap:10px;margin-top:18px}
-.vvideo-actions button{padding:11px 16px;border-radius:9px;font-weight:700}
-.vvideo-primary{background:#36d9ff;color:#06101b}
-.vvideo-secondary{background:#172236;color:#dbeafe}
-#vectorVideoResult{margin-top:18px;overflow-wrap:anywhere}
-#vectorVideoResult video{width:100%;max-height:420px;border-radius:12px;margin-top:12px}
-#vectorVideoResult a{color:#36d9ff}
-@media(max-width:520px){.vvideo-row{grid-template-columns:1fr}.vvideo-panel{padding:16px}}
-</style>
 </head>
 
 <body>
@@ -1178,10 +1158,6 @@ textarea::placeholder{
 <span class="nav-icon">⌂</span> Chat
 </button>
 
-
-<button onclick="openVectorVideo()">
-<span class="nav-icon">▣</span> Video generation
-</button>
 <button onclick="openImageModal()">
 <span class="nav-icon">✦</span> Image generation
 </button>
@@ -2867,96 +2843,5 @@ function sendEducationToChat(){
   </div>
 </div>
 
-
-<div id="vectorVideoModal">
- <div class="vvideo-panel">
-  <div style="display:flex;justify-content:space-between;align-items:center;gap:10px">
-   <div><h2>VECTOR Video Studio</h2><p>Create videos with Magic Hour or Pixazo.</p></div>
-   <button class="vvideo-secondary" onclick="closeVectorVideo()">Close</button>
-  </div>
-  <label for="vectorVideoProvider">Video provider</label>
-  <select id="vectorVideoProvider">
-   <option value="magichour">Magic Hour</option>
-   <option value="pixazo">Pixazo</option>
-  </select>
-  <label for="vectorVideoPrompt">Describe your video</label>
-  <textarea id="vectorVideoPrompt" placeholder="Describe the scene, camera movement, lighting, subject and style..."></textarea>
-  <div class="vvideo-row">
-   <div><label for="vectorVideoDuration">Duration</label><select id="vectorVideoDuration"><option>5</option><option>8</option><option>10</option></select></div>
-   <div><label for="vectorVideoRatio">Aspect ratio</label><select id="vectorVideoRatio"><option>9:16</option><option>16:9</option><option>1:1</option></select></div>
-   <div><label for="vectorVideoResolution">Resolution</label><select id="vectorVideoResolution"><option>720p</option><option>1080p</option></select></div>
-  </div>
-  <div class="vvideo-actions">
-   <button class="vvideo-primary" id="vectorVideoGenerate" onclick="generateVectorVideo()">Generate video</button>
-   <button class="vvideo-secondary" onclick="closeVectorVideo()">Cancel</button>
-  </div>
-  <div id="vectorVideoResult" aria-live="polite"></div>
- </div>
-</div>
-
-
-<script>
-function openVectorVideo(){
- const modal=document.getElementById('vectorVideoModal');
- if(modal) modal.classList.add('open');
-}
-function closeVectorVideo(){
- const modal=document.getElementById('vectorVideoModal');
- if(modal) modal.classList.remove('open');
-}
-async function generateVectorVideo(){
- const prompt=document.getElementById('vectorVideoPrompt').value.trim();
- const provider=document.getElementById('vectorVideoProvider').value;
- const result=document.getElementById('vectorVideoResult');
- const button=document.getElementById('vectorVideoGenerate');
- if(prompt.length<8){result.textContent='Please enter a more detailed video prompt.';return;}
- button.disabled=true;
- button.textContent='Submitting…';
- result.textContent='Submitting your video request…';
- try{
-  const response=await fetch('/api/video/generate',{
-   method:'POST',
-   headers:{'Content-Type':'application/json',...(localStorage.getItem('vector_token')?{Authorization:'Bearer '+localStorage.getItem('vector_token')}:{})},
-   body:JSON.stringify({
-    provider,
-    prompt,
-    duration:Number(document.getElementById('vectorVideoDuration').value),
-    aspectRatio:document.getElementById('vectorVideoRatio').value,
-    resolution:document.getElementById('vectorVideoResolution').value
-   })
-  });
-  const data=await response.json();
-  if(!response.ok||!data.ok)throw new Error(data.error||'Video request failed');
-  const job=data.job||{};
-  if(!job.id)throw new Error('Provider did not return a video job ID.');
-  result.innerHTML='<div class="notice">Video job submitted. Checking progress…<br>Job: '+String(job.id).replace(/[&<>"']/g,'')+'</div>';
-  const id=encodeURIComponent(job.id);
-  let attempts=0;
-  const poll=async()=>{
-   if(attempts++>=60){result.insertAdjacentHTML('beforeend','<p>Generation is taking longer than expected. Reopen this window and check again later.</p>');return;}
-   try{
-    const r=await fetch('/api/video/status/'+provider+'/'+id,{
-     headers:localStorage.getItem('vector_token')?{Authorization:'Bearer '+localStorage.getItem('vector_token')}:{}
-    });
-    const d=await r.json();
-    if(!r.ok||!d.ok)throw new Error(d.error||'Status check failed');
-    const j=d.job||{};
-    const status=String(j.status||'PROCESSING').toUpperCase();
-    if(j.outputUrl){
-     result.innerHTML='<div class="notice">Video ready</div><video controls playsinline src="'+String(j.outputUrl).replace(/"/g,'&quot;')+'"></video><p><a target="_blank" rel="noopener" href="'+String(j.outputUrl).replace(/"/g,'&quot;')+'">Open or save video</a></p>';
-     return;
-    }
-    if(['FAILED','ERROR','CANCELLED'].includes(status)){
-     result.textContent='Video generation failed: '+(j.error||status);return;
-    }
-    result.textContent='Video status: '+status+' — checking again…';
-    setTimeout(poll,5000);
-   }catch(e){result.textContent='Status check: '+e.message;}
-  };
-  setTimeout(poll,4000);
- }catch(e){result.textContent=e.message||'Video generation failed.';}
- finally{button.disabled=false;button.textContent='Generate video';}
-}
-</script>
 </body>
 </html>
