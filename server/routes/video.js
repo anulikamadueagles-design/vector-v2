@@ -14,10 +14,10 @@ function normalizeVideoOptions(body = {}) {
   let aspectRatio = String(body.aspect_ratio || '16:9');
   if (!VIDEO_RATIOS.includes(aspectRatio)) aspectRatio = '16:9';
 
-  let resolution = String(body.resolution || '720p').toLowerCase();
+  let resolution = String(body.resolution || 'auto').toLowerCase();
 
-  if (!VIDEO_RESOLUTIONS.includes(resolution)) {
-    resolution = '720p';
+  if (resolution !== 'auto' && VIDEO_RESOLUTIONS.includes(resolution) === false) {
+    resolution = 'auto';
   }
 
   return {
@@ -71,6 +71,71 @@ async function providerFetchWithFallback({
 }
 
 
+
+/* VECTOR_REAL_PROVIDER_FALLBACK */
+
+async function vectorProviderRequest(url, options = {}) {
+
+  let response = await vectorProviderRequest(url, options);
+
+  if (response.ok) {
+    return response;
+  }
+
+  let data = {};
+
+  try {
+    data = await response.clone().json();
+  } catch {}
+
+  const errorText = JSON.stringify(data).toLowerCase();
+
+  const compatibilityProblem =
+    response.status === 400 ||
+    response.status === 422 ||
+    errorText.includes('resolution') ||
+    errorText.includes('unsupported') ||
+    errorText.includes('not available') ||
+    errorText.includes('invalid combination') ||
+    errorText.includes('aspect ratio') ||
+    errorText.includes('does not support');
+
+  if (compatibilityProblem && options.body) {
+
+    try {
+
+      const body = JSON.parse(options.body);
+
+      delete body.resolution;
+      delete body.output_resolution;
+      delete body.video_resolution;
+
+      response = await fetch(url, {
+        ...options,
+        body: JSON.stringify(body)
+      });
+
+      if (response.ok) {
+        return response;
+      }
+
+      body.duration = Math.min(
+        Number(body.duration) || 5,
+        5
+      );
+
+      response = await fetch(url, {
+        ...options,
+        body: JSON.stringify(body)
+      });
+
+    } catch {}
+
+  }
+
+  return response;
+}
+
 const router = express.Router();
 
 const MAGIC_BASE =
@@ -86,7 +151,7 @@ function requireKey(value, name) {
 }
 
 async function json(url, options = {}) {
-  const response = await fetch(url, options);
+  const response = await vectorProviderRequest(url, options);
 
   const text = await response.text();
 
@@ -317,7 +382,7 @@ router.post('/generate', async (req, res) => {
       prompt,
       duration = 5,
       aspectRatio = '9:16',
-      resolution = '720p',
+      resolution = 'auto',
       style = 'photorealistic'
     } = req.body || {};
 
@@ -364,7 +429,7 @@ router.post('/generate', async (req, res) => {
         prompt: String(prompt).trim(),
         duration: seconds,
         aspectRatio: ratio,
-        resolution: size,
+        ...(size && size !== 'auto' ? { resolution: size } : {}),
         style
       });
     }
