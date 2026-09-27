@@ -1,5 +1,76 @@
 const express = require('express');
 
+// VECTOR_VIDEO_COMPATIBILITY_PATCH
+const VIDEO_RESOLUTIONS = ['720p', '1080p'];
+const VIDEO_RATIOS = ['9:16', '16:9', '1:1'];
+const VIDEO_DURATIONS = [2, 3, 4, 5, 6, 7, 8, 9, 10];
+
+function normalizeVideoOptions(body = {}) {
+  let duration = Number(body.duration || 5);
+  if (!Number.isFinite(duration)) duration = 5;
+
+  duration = Math.max(2, Math.min(10, Math.round(duration)));
+
+  let aspectRatio = String(body.aspect_ratio || '16:9');
+  if (!VIDEO_RATIOS.includes(aspectRatio)) aspectRatio = '16:9';
+
+  let resolution = String(body.resolution || '720p').toLowerCase();
+
+  if (!VIDEO_RESOLUTIONS.includes(resolution)) {
+    resolution = '720p';
+  }
+
+  return {
+    prompt: String(body.prompt || '').trim(),
+    duration,
+    aspect_ratio: aspectRatio,
+    resolution
+  };
+}
+
+function isCompatibilityError(status, data) {
+  const text = JSON.stringify(data || {}).toLowerCase();
+
+  return (
+    status === 400 ||
+    status === 422 ||
+    text.includes('resolution') ||
+    text.includes('not available') ||
+    text.includes('unsupported') ||
+    text.includes('invalid combination') ||
+    text.includes('aspect ratio') ||
+    text.includes('not support')
+  );
+}
+
+async function providerFetchWithFallback({
+  url,
+  headers,
+  body,
+  fallbackBody
+}) {
+  let response = await fetch(url, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify(body)
+  });
+
+  let data = await response.json().catch(() => ({}));
+
+  if (!response.ok && fallbackBody && isCompatibilityError(response.status, data)) {
+    response = await fetch(url, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify(fallbackBody)
+    });
+
+    data = await response.json().catch(() => ({}));
+  }
+
+  return { response, data };
+}
+
+
 const router = express.Router();
 
 const MAGIC_BASE =
