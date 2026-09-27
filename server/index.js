@@ -29,6 +29,7 @@ const billingRoutes = require('./routes/billing');
 const developerRoutes = require('./routes/developer');
 const adminRoutes = require('./routes/admin');
 const educationRoutes = require('./routes/education');
+const videoRoutes = require('./routes/video');
 
 const classRoutes = require('./routes/classes');
 const studentRoutes = require('./routes/students');
@@ -61,6 +62,7 @@ app.use('/api/developer', developerRoutes);
 app.use('/api/admin', adminRoutes);
 
 app.use('/api/education', educationRoutes);
+app.use('/api/video', videoRoutes);
 
 app.use('/api/classes', classRoutes);
 app.use('/api/students', studentRoutes);
