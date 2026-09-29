@@ -429,7 +429,7 @@ router.post('/generate', async (req, res) => {
         prompt: String(prompt).trim(),
         duration: seconds,
         aspectRatio: ratio,
-        ...(size && size !== 'auto' ? { ...(size && size !== 'auto' ? { resolution: size } : {}) } : {}),
+        ...(size && size !== 'auto' ? { resolution: size } : {}),
         style
       });
     }
