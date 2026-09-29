@@ -1171,6 +1171,12 @@ textarea::placeholder{
 </div>
 
 <button class="new-chat" onclick="newChat()">＋ New conversation</button>
+<a href="/downloads/vector.apk"
+   download
+   style="display:block;margin:0 14px 10px;padding:11px 14px;border-radius:11px;text-align:center;text-decoration:none;color:#fff;background:linear-gradient(135deg,#36d9ff,#477cff);font-weight:800;">
+   Download VECTOR Android
+</a>
+
 
 <nav class="nav">
 
@@ -1210,6 +1216,16 @@ textarea::placeholder{
 <span class="nav-icon">◎</span> Assistants
 </button>
 
+
+<!-- VECTOR_APK_DOWNLOAD -->
+<div style="padding:12px 14px;margin:10px 14px;border:1px solid rgba(54,217,255,.18);border-radius:12px;background:rgba(54,217,255,.05)">
+<a href="https://github.com/anulikamadueagles-design/vector-v2/releases/latest/download/VECTOR.apk" style="display:block;text-decoration:none;color:#fff;font-weight:700">
+Download VECTOR Android
+</a>
+<div style="font-size:9px;color:#65738b;margin-top:4px">
+Native Android app
+</div>
+</div>
 </nav>
 
 <div class="history" id="history">
@@ -1617,6 +1633,27 @@ It does not claim external actions were executed unless the server actually perf
 </div>
 
 <script>
+
+function vectorVideoStatusEndpoint(data) {
+  if (data && data.longVideo) {
+    return '/api/video-long/status/' + data.id;
+  }
+
+  return '/api/video/status/' +
+    encodeURIComponent(data.provider) +
+    '/' +
+    encodeURIComponent(data.id);
+}
+
+
+
+function vectorVideoGenerateEndpoint(duration) {
+  return Number(duration) > 10
+    ? '/api/video-long/generate'
+    : '/api/video/generate';
+}
+
+
 let token=localStorage.getItem('vector_token')||'';
 let conversationId=localStorage.getItem('vector_conversation')||'';
 let tts=false;
@@ -2573,7 +2610,9 @@ Return ONLY the finished educational material.
   }catch(error){
 
     output.innerText =
-      "VECTOR could not generate the material right now.\n\n" +
+      "VECTOR could not generate the material right now.
+
+" +
       error.message;
 
     status.innerText =
@@ -2674,7 +2713,9 @@ function sendEducationToChat(){
   if(textarea){
 
     textarea.value =
-      "Please review and improve this educational material:\n\n" +
+      "Please review and improve this educational material:
+
+" +
       currentEducationText;
 
     textarea.dispatchEvent(
@@ -2882,7 +2923,14 @@ function sendEducationToChat(){
   <label for="vectorVideoPrompt">Describe your video</label>
   <textarea id="vectorVideoPrompt" placeholder="Describe the scene, camera movement, lighting, subject and style..."></textarea>
   <div class="vvideo-row">
-   <div><label for="vectorVideoDuration">Duration</label><select id="vectorVideoDuration"><option>5</option><option>8</option><option>10</option></select></div>
+   <div><label for="vectorVideoDuration">Duration</label><select id="vectorVideoDuration">
+<option value="5">5 seconds</option>
+<option value="10">10 seconds</option>
+<option value="30">30 seconds</option>
+<option value="60">1 minute</option>
+<option value="300">5 minutes</option>
+<option value="600">10 minutes</option>
+</select></div>
    <div><label for="vectorVideoRatio">Aspect ratio</label><select id="vectorVideoRatio"><option>9:16</option><option>16:9</option><option>1:1</option></select></div>
    <div><label for="vectorVideoResolution">Resolution</label><select id="vectorVideoResolution"><option>720p</option><option>1080p</option></select></div>
   </div>
@@ -2914,7 +2962,7 @@ async function generateVectorVideo(){
  button.textContent='Submitting…';
  result.textContent='Submitting your video request…';
  try{
-  const response=await fetch('/api/video/generate',{
+  const response=await fetch(vectorVideoGenerateEndpoint(duration)),{
    method:'POST',
    headers:{'Content-Type':'application/json',...(localStorage.getItem('vector_token')?{Authorization:'Bearer '+localStorage.getItem('vector_token')}:{})},
    body:JSON.stringify({

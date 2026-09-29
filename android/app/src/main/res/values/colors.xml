@@ -1,0 +1,8 @@
+<resources>
+    <color name="vector_bg">#050914</color>
+    <color name="vector_panel">#0A1020</color>
+    <color name="vector_cyan">#36D9FF</color>
+    <color name="vector_blue">#477CFF</color>
+    <color name="vector_text">#F4F7FF</color>
+    <color name="vector_muted">#8996AD</color>
+</resources>
