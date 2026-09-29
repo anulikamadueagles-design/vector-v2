@@ -1,50 +1,128 @@
-const DEFAULT_MODEL = process.env.AI_MODEL || 'gpt-4o-mini';
+const DEFAULT_MODEL = process.env.GEMINI_MODEL || process.env.AI_MODEL || 'gemini-2.5-flash-lite';
+
+function textFromContent(content) {
+  if (typeof content === 'string') return content;
+
+  if (Array.isArray(content)) {
+    return content
+      .map(part => {
+        if (typeof part === 'string') return part;
+        return part?.text || part?.content || '';
+      })
+      .filter(Boolean)
+      .join('\n');
+  }
+
+  if (content == null) return '';
+
+  return String(content);
+}
 
 function localFallback(messages = []) {
-  const user = messages.filter(x => x.role === 'user').at(-1)?.content || '';
+  const userMessage = messages
+    .filter(item => item?.role === 'user')
+    .at(-1);
+
+  const user = textFromContent(userMessage?.content || '');
+
   return {
-    content: `VECTOR is online, but no text-AI provider is configured.\n\nYour request:\n${user}\n\nConfigure AI_API_URL, AI_API_KEY and AI_MODEL in the server environment to enable live AI.`
+    content:
+      'VECTOR is online, but no Gemini AI provider key is configured.\n\n' +
+      'Your request:\n' +
+      user +
+      '\n\nAdd GEMINI_API_KEY to the server environment to enable live AI.'
+  };
+}
+
+function buildGeminiMessages(messages = []) {
+  let systemInstruction = '';
+  const contents = [];
+
+  for (const message of messages) {
+    const role = message?.role || 'user';
+    const text = textFromContent(message?.content || '');
+
+    if (!text.trim()) continue;
+
+    if (role === 'system') {
+      systemInstruction += (systemInstruction ? '\n\n' : '') + text;
+      continue;
+    }
+
+    contents.push({
+      role: role === 'assistant' ? 'model' : 'user',
+      parts: [{ text }]
+    });
+  }
+
+  return {
+    systemInstruction: systemInstruction
+      ? { parts: [{ text: systemInstruction }] }
+      : undefined,
+    contents
   };
 }
 
 exports.callAI = async ({ messages = [], model } = {}) => {
-  const url = process.env.AI_API_URL;
-  const key = process.env.AI_API_KEY;
-  if (!url || !key) return localFallback(messages);
+  const key = process.env.GEMINI_API_KEY;
+
+  if (!key) {
+    return localFallback(messages);
+  }
+
+  const selectedModel = model || DEFAULT_MODEL;
+
+  const endpoint =
+    'https://generativelanguage.googleapis.com/v1beta/models/' +
+    encodeURIComponent(selectedModel) +
+    ':generateContent?key=' +
+    encodeURIComponent(key);
+
+  const payload = buildGeminiMessages(messages);
 
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 90000);
 
   try {
-    const response = await fetch(url, {
+    const response = await fetch(endpoint, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${key}`
+        'Content-Type': 'application/json'
       },
-      body: JSON.stringify({
-        model: model || DEFAULT_MODEL,
-        messages
-      }),
+      body: JSON.stringify(payload),
       signal: controller.signal
     });
 
     const data = await response.json().catch(() => ({}));
+
     if (!response.ok) {
-      const detail = data?.error?.message || data?.error || data?.message;
-      throw new Error(typeof detail === 'string' ? detail : `AI provider returned HTTP ${response.status}`);
+      const detail =
+        data?.error?.message ||
+        data?.error ||
+        data?.message ||
+        ('Gemini returned HTTP ' + response.status);
+
+      throw new Error(
+        typeof detail === 'string'
+          ? detail
+          : JSON.stringify(detail)
+      );
     }
 
-    const content =
-      data?.choices?.[0]?.message?.content ??
-      data?.output_text ??
-      data?.content ??
-      data?.message?.content;
+    const content = (data?.candidates || [])
+      .flatMap(candidate => candidate?.content?.parts || [])
+      .map(part => part?.text || '')
+      .filter(Boolean)
+      .join('\n');
 
-    if (typeof content !== 'string' || !content.trim()) {
-      throw new Error('AI provider returned an empty or unsupported response.');
+    if (!content.trim()) {
+      throw new Error('Gemini returned an empty response.');
     }
-    return { content, raw: data };
+
+    return {
+      content,
+      raw: data
+    };
   } finally {
     clearTimeout(timeout);
   }

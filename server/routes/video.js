@@ -422,14 +422,14 @@ router.post('/generate', async (req, res) => {
         prompt: String(prompt).trim(),
         duration: seconds,
         aspectRatio: ratio,
-        resolution: size
+        ...(size && size !== 'auto' ? { resolution: size } : {})
       });
     } else {
       raw = await pixazoGenerate({
         prompt: String(prompt).trim(),
         duration: seconds,
         aspectRatio: ratio,
-        ...(size && size !== 'auto' ? { resolution: size } : {}),
+        ...(size && size !== 'auto' ? { ...(size && size !== 'auto' ? { resolution: size } : {}) } : {}),
         style
       });
     }
