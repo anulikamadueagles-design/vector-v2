@@ -3002,5 +3002,228 @@ async function generateVectorVideo(){
  finally{button.disabled=false;button.textContent='Generate video';}
 }
 </script>
+
+<!-- VECTOR_LOCAL_DATA_MANAGER_V1 -->
+<style>
+#vector-local-manager{position:fixed;right:14px;bottom:14px;z-index:99999;font:14px system-ui,sans-serif;color:#edf7ff}
+#vector-local-toggle{border:1px solid #36d9ff;background:#080d19;color:#edf7ff;border-radius:12px;padding:12px 15px;box-shadow:0 4px 24px #0008}
+#vector-local-panel{display:none;position:absolute;right:0;bottom:56px;width:min(330px,calc(100vw - 28px));padding:16px;background:#080d19;border:1px solid #263b52;border-radius:14px;box-shadow:0 8px 35px #0009}
+#vector-local-panel button{display:block;width:100%;margin-top:9px;padding:11px;border-radius:9px;border:1px solid #29445d;background:#101b2b;color:#edf7ff}
+#vector-local-panel p{font-size:12px;line-height:1.5;color:#a9bfd1}
+#vector-local-status{overflow-wrap:anywhere}
+</style>
+<div id="vector-local-manager">
+  <button id="vector-local-toggle" type="button">Local Data</button>
+  <div id="vector-local-panel">
+    <strong>VECTOR Local Data</strong>
+    <p>Supported data is cached on this device. Export backups regularly. Backups do not contain your login token.</p>
+    <button id="vector-local-export" type="button">Export Backup</button>
+    <button id="vector-local-import-button" type="button">Import Backup</button>
+    <input id="vector-local-import-file" type="file" accept=".json,application/json" hidden>
+    <p id="vector-local-status" role="status">Local backup manager ready.</p>
+  </div>
+</div>
+<script>
+(function () {
+  'use strict';
+  if (window.__VECTOR_LOCAL_DATA_MANAGER_V1__) return;
+  window.__VECTOR_LOCAL_DATA_MANAGER_V1__ = true;
+
+  const PREFIX = 'vector_localfirst_v1_';
+  const TOKEN_KEY = 'vector_token';
+  const allowed = ['/api/chat', '/api/memory', '/api/projects', '/api/assistants'];
+
+  function scope() {
+    try {
+      const token = localStorage.getItem(TOKEN_KEY) || '';
+      const part = token.split('.')[1];
+      if (part) {
+        const payload = JSON.parse(atob(part.replace(/-/g, '+').replace(/_/g, '/')));
+        if (payload.id) return String(payload.id).replace(/[^a-zA-Z0-9_-]/g, '_');
+      }
+    } catch (_) {}
+    return 'guest';
+  }
+
+  function key() { return PREFIX + scope(); }
+
+  function readState() {
+    try {
+      const v = JSON.parse(localStorage.getItem(key()) || '{}');
+      return {
+        version: 1,
+        updatedAt: v.updatedAt || new Date().toISOString(),
+        cache: v.cache && typeof v.cache === 'object' ? v.cache : {},
+        activity: Array.isArray(v.activity) ? v.activity : [],
+        outbox: Array.isArray(v.outbox) ? v.outbox : []
+      };
+    } catch (_) {
+      return {version:1,updatedAt:new Date().toISOString(),cache:{},activity:[],outbox:[]};
+    }
+  }
+
+  function saveState(st) {
+    st.updatedAt = new Date().toISOString();
+    try { localStorage.setItem(key(), JSON.stringify(st)); return true; }
+    catch (_) {
+      setStatus('Device storage is full. Export a backup and free some space.');
+      return false;
+    }
+  }
+
+  function setStatus(message) {
+    const el = document.getElementById('vector-local-status');
+    if (el) el.textContent = message;
+  }
+
+  function allowedPath(path) {
+    return allowed.some(x => path === x || path.startsWith(x + '/'));
+  }
+
+  function cacheKey(path, search) { return path + (search || ''); }
+
+  const originalFetch = window.fetch.bind(window);
+  window.fetch = async function(input, init) {
+    let url, method, requestBody;
+    try {
+      url = new URL(typeof input === 'string' ? input : input.url, location.href);
+      method = String((init && init.method) || (input && input.method) || 'GET').toUpperCase();
+      requestBody = init && init.body;
+    } catch (_) {
+      return originalFetch(input, init);
+    }
+
+    if (url.origin !== location.origin || !allowedPath(url.pathname)) {
+      return originalFetch(input, init);
+    }
+
+    const cacheId = cacheKey(url.pathname, url.search);
+
+    try {
+      const response = await originalFetch(input, init);
+
+      if (response.ok) {
+        let data = null;
+        try { data = await response.clone().json(); } catch (_) {}
+
+        const st = readState();
+        if (method === 'GET' && data !== null) {
+          st.cache[cacheId] = {data:data, savedAt:new Date().toISOString()};
+        } else if (method !== 'GET') {
+          let body = null;
+          try { body = typeof requestBody === 'string' ? JSON.parse(requestBody) : null; } catch (_) {}
+          st.activity.push({
+            path:url.pathname, method:method, body:body, response:data,
+            savedAt:new Date().toISOString()
+          });
+          if (st.activity.length > 300) st.activity = st.activity.slice(-300);
+        }
+        saveState(st);
+      }
+      return response;
+    } catch (error) {
+      const st = readState();
+
+      if (method === 'GET' && st.cache[cacheId]) {
+        setStatus('Server unavailable. Showing this device’s last cached copy.');
+        return new Response(JSON.stringify(st.cache[cacheId].data), {
+          status:200,
+          headers:{'Content-Type':'application/json','X-VECTOR-Local-Cache':'1'}
+        });
+      }
+
+      if (method !== 'GET') {
+        let body = null;
+        try { body = typeof requestBody === 'string' ? JSON.parse(requestBody) : null; } catch (_) {}
+        st.outbox.push({
+          path:url.pathname, method:method, body:body,
+          savedAt:new Date().toISOString(), status:'not-synced'
+        });
+        if (st.outbox.length > 100) st.outbox = st.outbox.slice(-100);
+        saveState(st);
+        setStatus('Connection failed. Request details were saved for backup, but not sent.');
+      }
+      throw error;
+    }
+  };
+
+  document.addEventListener('DOMContentLoaded', function() {
+    const panel = document.getElementById('vector-local-panel');
+    const toggle = document.getElementById('vector-local-toggle');
+    const fileInput = document.getElementById('vector-local-import-file');
+
+    toggle.addEventListener('click', function() {
+      panel.style.display = panel.style.display === 'block' ? 'none' : 'block';
+    });
+
+    document.getElementById('vector-local-export').addEventListener('click', function() {
+      const st = readState();
+      const safeKeys = {};
+      for (let i=0; i<localStorage.length; i++) {
+        const k = localStorage.key(i);
+        if (k && k.startsWith('vector_') && k !== TOKEN_KEY &&
+            !k.toLowerCase().includes('password')) {
+          safeKeys[k] = localStorage.getItem(k);
+        }
+      }
+      const backup = {
+        app:'VECTOR', backupVersion:1, exportedAt:new Date().toISOString(),
+        localData:st, localSettings:safeKeys
+      };
+      const blob = new Blob([JSON.stringify(backup,null,2)], {type:'application/json'});
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = 'VECTOR-local-backup-' + new Date().toISOString().replace(/[:.]/g,'-') + '.json';
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      setTimeout(function(){URL.revokeObjectURL(link.href);},1000);
+      setStatus('Backup exported. Keep the file somewhere safe.');
+    });
+
+    document.getElementById('vector-local-import-button').addEventListener('click', function() {
+      fileInput.click();
+    });
+
+    fileInput.addEventListener('change', async function() {
+      const file = fileInput.files && fileInput.files[0];
+      if (!file) return;
+      try {
+        const backup = JSON.parse(await file.text());
+        if (backup.app !== 'VECTOR' || backup.backupVersion !== 1 ||
+            !backup.localData || typeof backup.localData !== 'object') {
+          throw new Error('This is not a supported VECTOR backup.');
+        }
+        if (!confirm('Import this backup into this browser? Current cached local data may be replaced.')) return;
+
+        const incoming = backup.localData;
+        const clean = {
+          version:1,
+          updatedAt:new Date().toISOString(),
+          cache:incoming.cache && typeof incoming.cache === 'object' ? incoming.cache : {},
+          activity:Array.isArray(incoming.activity) ? incoming.activity : [],
+          outbox:Array.isArray(incoming.outbox) ? incoming.outbox : []
+        };
+        if (!saveState(clean)) throw new Error('Not enough browser storage space.');
+        if (backup.localSettings && typeof backup.localSettings === 'object') {
+          Object.entries(backup.localSettings).forEach(function(entry) {
+            const k = entry[0], v = entry[1];
+            if (k.startsWith('vector_') && k !== TOKEN_KEY && typeof v === 'string') {
+              try { localStorage.setItem(k,v); } catch (_) {}
+            }
+          });
+        }
+        setStatus('Backup imported on this device. Reload VECTOR to refresh the interface.');
+      } catch (err) {
+        setStatus('Import failed: ' + (err.message || 'Invalid backup file.'));
+      } finally {
+        fileInput.value = '';
+      }
+    });
+  });
+})();
+</script>
+<!-- /VECTOR_LOCAL_DATA_MANAGER_V1 -->
+
 </body>
 </html>
