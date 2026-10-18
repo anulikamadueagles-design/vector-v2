@@ -2610,9 +2610,7 @@ Return ONLY the finished educational material.
   }catch(error){
 
     output.innerText =
-      "VECTOR could not generate the material right now.
-
-" +
+      "VECTOR could not generate the material right now.\n\n" +
       error.message;
 
     status.innerText =
@@ -2713,9 +2711,7 @@ function sendEducationToChat(){
   if(textarea){
 
     textarea.value =
-      "Please review and improve this educational material:
-
-" +
+      "Please review and improve this educational material:\\n" +
       currentEducationText;
 
     textarea.dispatchEvent(
@@ -2962,7 +2958,7 @@ async function generateVectorVideo(){
  button.textContent='Submitting…';
  result.textContent='Submitting your video request…';
  try{
-  const response=await fetch(vectorVideoGenerateEndpoint(duration)),{
+  const response=await fetch(vectorVideoGenerateEndpoint(duration),{
    method:'POST',
    headers:{'Content-Type':'application/json',...(localStorage.getItem('vector_token')?{Authorization:'Bearer '+localStorage.getItem('vector_token')}:{})},
    body:JSON.stringify({
