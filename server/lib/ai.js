@@ -45,51 +45,27 @@ function localFallback(messages = []) {
 }
 
 function buildInteractionInput(messages = []) {
-  const cleaned = [];
-
   let systemText = '';
+  const conversation = [];
 
   for (const message of messages) {
     const role = message?.role || 'user';
+    const text = textFromContent(message?.content || '');
 
-    const text = textFromContent(
-      message?.content || ''
-    );
-
-    if (!text.trim()) {
-      continue;
-    }
+    if (!text.trim()) continue;
 
     if (role === 'system') {
-      systemText +=
-        (systemText ? '\n\n' : '') + text;
+      systemText += (systemText ? '\n\n' : '') + text;
       continue;
     }
 
-    cleaned.push({
-      role:
-        role === 'assistant'
-          ? 'model'
-          : 'user',
-      parts: [
-        {
-          text
-        }
-      ]
-    });
+    const label = role === 'assistant' ? 'Assistant' : 'User';
+    conversation.push(`${label}: ${text}`);
   }
 
-  /*
-   * Interactions API applies system instructions
-   * at the interaction level.
-   *
-   * The SDK accepts system_instruction separately,
-   * so the conversation roles remain intact.
-   */
   return {
-    input: cleaned,
-    system_instruction:
-      systemText || undefined
+    input: conversation.join('\n\n'),
+    system_instruction: systemText || undefined
   };
 }
 
