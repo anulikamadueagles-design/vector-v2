@@ -3188,17 +3188,25 @@ async function generateVectorVideo(){
             !backup.localData || typeof backup.localData !== 'object') {
           throw new Error('This is not a supported VECTOR backup.');
         }
-        if (!confirm('Import this backup into this browser? Current cached local data may be replaced.')) return;
-
         const incoming = backup.localData;
+        if (!incoming.cache || typeof incoming.cache !== 'object' ||
+            Array.isArray(incoming.cache) ||
+            !Array.isArray(incoming.activity) ||
+            !Array.isArray(incoming.outbox)) {
+          throw new Error('Backup data is incomplete or invalid.');
+        }
+
+        if (!confirm('Restore this backup? Existing local data will be merged, not discarded.')) return;
+
+        const current = readState();
         const clean = {
           version:1,
           updatedAt:new Date().toISOString(),
-          cache:incoming.cache && typeof incoming.cache === 'object' ? incoming.cache : {},
-          activity:Array.isArray(incoming.activity) ? incoming.activity : [],
-          outbox:Array.isArray(incoming.outbox) ? incoming.outbox : []
+          cache:Object.assign({}, incoming.cache, current.cache),
+          activity:incoming.activity.concat(current.activity).slice(-300),
+          outbox:incoming.outbox.concat(current.outbox).slice(-100)
         };
-        if (!saveState(clean)) throw new Error('Not enough browser storage space.');
+        if (!saveState(clean)) throw new Error('Not enough browser storage space. Existing data was not intentionally cleared.');
         if (backup.localSettings && typeof backup.localSettings === 'object') {
           Object.entries(backup.localSettings).forEach(function(entry) {
             const k = entry[0], v = entry[1];
