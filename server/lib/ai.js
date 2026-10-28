@@ -1,7 +1,7 @@
 const { GoogleGenAI } = require('@google/genai');
 
 const DEFAULT_MODEL =
-  process.env.GEMINI_MODEL || 'gemini-3.5-flash-lite';
+  (process.env.GEMINI_MODEL && process.env.GEMINI_MODEL !== 'gemini-2.5-flash-lite' ? process.env.GEMINI_MODEL : 'gemini-3.5-flash-lite');
 
 function textFromContent(content) {
   if (typeof content === 'string') {
