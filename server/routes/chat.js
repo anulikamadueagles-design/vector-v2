@@ -18,14 +18,6 @@ r.post('/', auth(), async (q, s) => {
       });
     }
 
-    const users = db.read('users');
-
-    if (!users.some(x => x.id === q.user.id)) {
-      return s.status(401).json({
-        error: 'User not found'
-      });
-    }
-
     let conversations = db.read('conversations');
     let messages = db.read('messages');
 
