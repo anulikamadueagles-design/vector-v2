@@ -3022,6 +3022,22 @@ async function generateVectorVideo(){
   'use strict';
   if (window.__VECTOR_LOCAL_DATA_MANAGER_V1__) return;
   window.__VECTOR_LOCAL_DATA_MANAGER_V1__ = true;
+  // VECTOR_PERSISTENT_BROWSER_STORAGE_V1
+  // Ask the browser to protect locally saved VECTOR data from automatic eviction.
+  (async function requestVectorPersistentStorage() {
+    try {
+      if (navigator.storage && navigator.storage.persist) {
+        const granted = await navigator.storage.persist();
+        console.info(
+          '[VECTOR] Persistent browser storage:',
+          granted ? 'granted' : 'not granted; export backups regularly'
+        );
+      }
+    } catch (e) {
+      console.warn('[VECTOR] Storage persistence request unavailable.');
+    }
+  })();
+
 
   const PREFIX = 'vector_localfirst_v1_';
   const TOKEN_KEY = 'vector_token';
